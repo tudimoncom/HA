@@ -1,0 +1,25 @@
+# Управялем яркостью диммера Noolite SU из Home Assistant через Ethernet-шлюз Ноолайт PR1132
+
+# configuration.yaml
+
+
+####################################################
+#                  Ночник в спальне                #
+####################################################
+input_number:
+  light_level:
+    name: "яркость ночник"      # имя
+    min: 0                      # значение ОТ
+    max: 100                    # значение ДО
+    step: 10                    # шаг
+    
+automation:
+  - alias: Регулировка яркости диммера Noolite
+    trigger:
+      platform: state
+      entity_id: input_number.light_level
+    action:
+      service: shell_command.set_dimmer_level
+
+shell_command:
+  set_dimmer_level: '/usr/bin/curl -s "http://192.168.0.8/api.htm?ch=5&cmd={{ states("input_number.light_level") | int }}"'

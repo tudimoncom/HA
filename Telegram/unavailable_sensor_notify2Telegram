@@ -1,0 +1,69 @@
+# Home Assistant unavailable sensor notify to Telegram
+
+# Уведомление в Телеграм о том, что один из сенсоров ушел в состояние "Недоступен"
+
+# Код кривой, чисто для себя
+# ToDo заменить в Триггере список сенсоров на домен?
+
+####################################################
+#                      СКРИПТЫ                     #
+####################################################
+
+    script:
+      unavailable_sensor_list:    
+        alias: Отправка недоступных сенсоров
+        sequence:
+         - service: notify.telegram_admin
+           data:
+             message: | 
+                 {{"\U0001F50B"}} Отчет за {{ states('sensor.time_date') }}
+                 Список недоступных сенсоров:
+                 {{ states.sensor | selectattr('state', 'eq', 'unavailable') | map(attribute="name") | join ("
+                 ") }}
+
+####################################################
+#                   АВТОМАТИЗАЦИИ                  #
+####################################################
+
+    automation: 
+        - id: Уведомление о том что датчик ушел в состояние unavailable
+          alias: send_sensors_unavailable
+          trigger:
+          - platform: state
+            entity_id:
+             - sensor.battery_1************9
+             - sensor.battery_1************3
+             - sensor.battery_1************a
+             - sensor.battery_1************a
+             - sensor.battery_1************c
+             - sensor.battery_1************5
+             - sensor.battery_1************b
+             - sensor.battery_1************b
+             - sensor.battery_1************e
+             - sensor.battery_1************6
+             - sensor.battery_1************e
+             - sensor.battery_1************b
+             - sensor.battery_1************3
+             - sensor.battery_1************c
+             - sensor.battery_1************6
+             - sensor.battery_1************f
+             - sensor.battery_1************9
+             - sensor.battery_1************0
+             - sensor.battery_1************6
+             - sensor.battery_1************7
+             - sensor.battery_1************3
+            to: unavailable
+            for: '00:01:00'
+          condition: []
+          action:
+          - service: notify.telegram_admin
+            data:
+              message: | 
+                 {{"\U000026A0"}} Датчик unavailable!!!   {{ states('sensor.time_date') }}
+                 
+                 unavaibale counter = {{ states('counter.unavailable_sensors_counter') }} 
+          - service: script.turn_on
+            entity_id: script.unavailable_sensor_list
+          - service: counter.increment
+            data:
+              entity_id: counter.unavailable_sensors_counter

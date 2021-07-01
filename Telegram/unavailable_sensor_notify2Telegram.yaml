@@ -1,4 +1,4 @@
-# Home Assistant unavailable sensor notify to Telegram
+# Home Assistant notify to Telegram about unavailable sensor
 
 # Уведомление в Телеграм о том, что один из сенсоров ушел в состояние "Недоступен"
 

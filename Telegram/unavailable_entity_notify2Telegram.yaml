@@ -1,0 +1,123 @@
+# Home Assistant notify to Telegram about unavailable entity
+
+# Уведомление в Телеграм о том, что какая то сущность НА ушла в состояние "Недоступен"
+
+
+####################################################
+#                       СЕНСОРЫ                    #
+####################################################
+
+    sensor:
+
+      - platform: template
+        sensors:
+
+          unavailable_now_light:
+            friendly_name: "Всего недоступных светильников - "
+            entity_id:
+              - sensor.time
+            value_template: "{{states.light | selectattr ('state', 'equalto', 'unavailable') | list | length}}"
+            icon_template: mdi:counter        
+
+          unavailable_now_switch:
+            friendly_name: "Всего недоступных реле - "
+            entity_id:
+              - sensor.time
+            value_template: "{{states.switch | selectattr ('state', 'equalto', 'unavailable') | list | length}}"
+            icon_template: mdi:counter 
+            
+          unavailable_now_sensor:
+            friendly_name: "Всего недоступных сенсоров - "
+            entity_id:
+              - sensor.time
+            value_template: "{{states.sensor | selectattr ('state', 'equalto', 'unavailable') | list | length}}"
+            icon_template: mdi:counter
+            
+          unavailable_now_binary_sensor:
+            friendly_name: "Всего недоступных бинарных сенсоров - "
+            entity_id:
+              - sensor.time
+            value_template: "{{states.binary_sensor | selectattr ('state', 'equalto', 'unavailable') | list | length}}"
+            icon_template: mdi:counter
+            
+            
+####################################################
+#                      СКРИПТЫ                     #
+####################################################
+
+    script:
+
+      unavailable_list_var1:    
+        alias: Отправка отчета о недоступных сущностях var1
+        sequence:
+         - service: notify.telegram_admin
+           data:
+             message: | 
+                 {{"\U0001F6A8"}} Отчет за {{ states('sensor.time_date') }}
+                 
+                 {{"\U0001F4A1"}} Светильников недоступно - {{ states('sensor.unavailable_now_light') }} 
+                 {{"\U0001F50C"}} Свичей недоступно - {{ states('sensor.unavailable_now_switch') }} 
+                 {{"\U0001F321"}} Сенсоров недоступно - {{ states('sensor.unavailable_now_sensor') }} 
+                 {{"\U0001F51F"}} Бинарных сенсоров недоступно - {{ states('sensor.unavailable_now_binary_sensor') }}             
+                 
+                 Список недоступных сущностей:
+                 {{ states | selectattr('state', 'eq', 'unavailable') | map(attribute="name") | join ("
+                 ") }}
+
+      unavailable_list_var2:    
+        alias: Отправка отчета о недоступных сущностях var2
+        sequence:
+         - service: notify.telegram_admin
+           data:
+             message: | 
+                 {{"\U0001F6A8"}} Отчет за {{ states('sensor.time_date') }}
+                 
+                 {% if (states('sensor.unavailable_now_light') | int > 0) -%}
+                   -  
+                 {{"\U0001F4A1"}} Светильников недоступно - {{ states('sensor.unavailable_now_light') }}:
+                 {{ states.light | selectattr('state', 'eq', 'unavailable') | map(attribute="name") | join ("
+                 ") }}
+                 {%- endif %}
+                 {% if (states('sensor.unavailable_now_switch') | int > 0) -%}
+                   -  
+                 {{"\U0001F50C"}} Свичей недоступно - {{ states('sensor.unavailable_now_switch') }}:
+                 {{ states.switch | selectattr('state', 'eq', 'unavailable') | map(attribute="name") | join ("
+                 ") }}
+                 {%- endif %}
+                 {% if (states('sensor.unavailable_now_sensor') | int > 0) -%}
+                   -  
+                 {{"\U0001F321"}} Сенсоров недоступно - {{ states('sensor.unavailable_now_sensor') }}:
+                 {{ states.sensor | selectattr('state', 'eq', 'unavailable') | map(attribute="name") | join ("
+                 ") }}
+                 {%- endif %}
+                 {% if (states('sensor.unavailable_now_binary_sensor') | int > 0) -%}
+                   -  
+                 {{"\U0001F51F"}} Бинарных сенсоров недоступно - {{ states('sensor.unavailable_now_binary_sensor') }}:
+                 {{ states.binary_sensor | selectattr('state', 'eq', 'unavailable') | map(attribute="name") | join ("
+                 ") }}
+                 {%- endif %}
+
+                        
+####################################################
+#                   АВТОМАТИЗАЦИИ                  #
+####################################################
+                        
+    automation:   
+
+        - id: Уведомление о недоступных сущностях
+          alias: send_unavailable_entity_list
+          trigger:
+          - platform: state
+            entity_id:
+             - sensor.unavailable_now_light
+             - sensor.unavailable_now_switch
+             - sensor.unavailable_now_sensor
+             - sensor.unavailable_now_binary_sensor
+            for: '00:01:00'
+          condition: []
+          action:
+          - service: script.turn_on
+            entity_id: script.unavailable_list_var1
+          - service: script.turn_on
+            entity_id: script.unavailable_list_var2
+	

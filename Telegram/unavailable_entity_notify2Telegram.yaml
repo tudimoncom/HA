@@ -71,32 +71,26 @@
            data:
              message: | 
                  {{"\U0001F6A8"}} Отчет за {{ states('sensor.time_date') }}
-                 
-                 {% if (states('sensor.unavailable_now_light') | int > 0) -%}
-                   -  
+                 {% if (states('sensor.unavailable_now_light') | int > 0) %}
                  {{"\U0001F4A1"}} Светильников недоступно - {{ states('sensor.unavailable_now_light') }}:
                  {{ states.light | selectattr('state', 'eq', 'unavailable') | map(attribute="name") | join ("
                  ") }}
-                 {%- endif %}
-                 {% if (states('sensor.unavailable_now_switch') | int > 0) -%}
-                   -  
+                 {% endif %}
+                 {% if (states('sensor.unavailable_now_switch') | int > 0) %}
                  {{"\U0001F50C"}} Свичей недоступно - {{ states('sensor.unavailable_now_switch') }}:
                  {{ states.switch | selectattr('state', 'eq', 'unavailable') | map(attribute="name") | join ("
                  ") }}
-                 {%- endif %}
-                 {% if (states('sensor.unavailable_now_sensor') | int > 0) -%}
-                   -  
+                 {% endif %}
+                 {% if (states('sensor.unavailable_now_sensor') | int > 0) %}
                  {{"\U0001F321"}} Сенсоров недоступно - {{ states('sensor.unavailable_now_sensor') }}:
                  {{ states.sensor | selectattr('state', 'eq', 'unavailable') | map(attribute="name") | join ("
                  ") }}
-                 {%- endif %}
-                 {% if (states('sensor.unavailable_now_binary_sensor') | int > 0) -%}
-                   -  
+                 {% endif %}
+                 {% if (states('sensor.unavailable_now_binary_sensor') | int > 0) %}
                  {{"\U0001F51F"}} Бинарных сенсоров недоступно - {{ states('sensor.unavailable_now_binary_sensor') }}:
                  {{ states.binary_sensor | selectattr('state', 'eq', 'unavailable') | map(attribute="name") | join ("
                  ") }}
-                 {%- endif %}
-
+                 {% endif %}
                         
 ####################################################
 #                   АВТОМАТИЗАЦИИ                  #

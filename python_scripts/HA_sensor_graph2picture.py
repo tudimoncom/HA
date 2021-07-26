@@ -174,7 +174,7 @@ if 1 == 1:
     ax.yaxis.set_major_formatter(FormatStrFormatter('%.0f'))
     ax.legend(['print: ' + time_array[-1].strftime('%d/%m %H:%M')])
     ax.grid(which='major', color = 'gray', linestyle=':')       # Добавляем линии основной сетки
-    ax.xaxis.set_minor_locator(ticker.MultipleLocator(1))       # Задаем шаг дополнительный дилений (тиков)
+    ax.xaxis.set_minor_locator(ticker.MultipleLocator(1))       # Задаем шаг дополнительный делений (тиков)
     ax.minorticks_on()                                          # Включаем видимость вспомогательных делений
 
     xformatter = DateFormatter('%H:%M')

@@ -128,7 +128,7 @@ for i in readable_json:
         ####################### 
 
         try:
-            float(i['state'])       # если значение датчика число, то выполняем всю секцию try: до except:
+            float(i['state'])       # пробуем выполнить секцию try: до except:
             
             # формируем массивы для построения графика
             state_array = np.append(state_array, float(i['state']))

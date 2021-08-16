@@ -69,21 +69,53 @@ sensor:
     update_interval: 60s
     automatic_baseline_calibration: false
 
-  # системный сенсоры  
+  # системный сенсоры
   - platform: uptime
     name: "d1mini-n2 Uptime Sensor"
+    id: uptime_sensor
+    update_interval: 60s
+    on_raw_value:
+      then:
+        - text_sensor.template.publish:
+            id: uptime_human
+            state: !lambda |-
+              int seconds = round(id(uptime_sensor).raw_state);
+              int days = seconds / (24 * 3600);
+              seconds = seconds % (24 * 3600);
+              int hours = seconds / 3600;
+              seconds = seconds % 3600;
+              int minutes = seconds /  60;
+              seconds = seconds % 60;
+              return (
+                (days ? String(days) + "d " : "") +
+                (hours ? String(hours) + "h " : "") +
+                (minutes ? String(minutes) + "m " : "") +
+                (String(seconds) + "s")
+              ).c_str();
+              
+  #- platform: uptime
+  #  name: "d1mini-n2 Uptime Sensor"
   - platform: wifi_signal
     name: "d1mini-n2 WiFi Signal"
     update_interval: 60s      
 
 # ТЕКСТОВЫЕ СЕНСОРЫ    
 text_sensor:
+  
+  # Версия
   - platform: version
     name: "d1mini-n2 Version"
-        
+    
+  # Human readable Uptime sensor
+  - platform: template
+    name: "d1mini-n2 Uptime Human Readable"
+    id: uptime_human
+    icon: mdi:clock-start
+
 # ПЕРЕКЛЮЧАТЕЛИ
 switch:
 
   # программный переключатель, который позволит нам перезагрузить устройство из Home Assistant (или путем публикации вручную в MQTT или API)
   - platform: restart
     name: "d1mini-n2 restart"
+    

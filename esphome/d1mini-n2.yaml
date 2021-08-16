@@ -1,5 +1,17 @@
+# -----------------------------------------------------------------------------
+# Wemos d1 mini + MH-Z19B
+#
+# DATE: 2021-08-16
+#
+# MH-Z19B use UART on pins:
+#   rx_pin: GPIO3 (D9)
+#   tx_pin: GPIO1 (D10)
+#
+# -----------------------------------------------------------------------------
+
 esphome:
   name: d1mini-n2
+  comment: Датчик качества воздуха в спальне
   platform: ESP8266
   board: d1_mini
 
@@ -63,7 +75,12 @@ sensor:
   - platform: wifi_signal
     name: "d1mini-n2 WiFi Signal"
     update_interval: 60s      
-    
+
+# ТЕКСТОВЫЕ СЕНСОРЫ    
+text_sensor:
+  - platform: version
+    name: "d1mini-n2 Version"
+        
 # ПЕРЕКЛЮЧАТЕЛИ
 switch:
 

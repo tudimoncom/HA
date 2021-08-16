@@ -69,7 +69,7 @@ sensor:
     update_interval: 60s
     automatic_baseline_calibration: false
 
-  # системный сенсоры
+  # системные сенсоры
   - platform: uptime
     name: "d1mini-n2 Uptime Sensor"
     id: uptime_sensor
@@ -93,8 +93,6 @@ sensor:
                 (String(seconds) + "s")
               ).c_str();
               
-  #- platform: uptime
-  #  name: "d1mini-n2 Uptime Sensor"
   - platform: wifi_signal
     name: "d1mini-n2 WiFi Signal"
     update_interval: 60s      

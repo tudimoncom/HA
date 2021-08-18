@@ -86,9 +86,7 @@ sensor:
       name: "d1mini-n2 CCS811 Total Volatile Organic Compound"
     address: 0x5A
     update_interval: 60s
-
   # Static Calibrating Baseline CCS811
-  #- platform: ccs811
   #  baseline: 0xA483
 
   # системные сенсоры

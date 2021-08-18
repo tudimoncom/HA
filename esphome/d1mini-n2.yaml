@@ -1,12 +1,15 @@
 # -----------------------------------------------------------------------------
-# Wemos d1 mini + MH-Z19B
+# Wemos d1 mini + MH-Z19B + CCS811
 #
-# DATE: 2021-08-16
+# DATE: 2021-08-18
 #
 # MH-Z19B use UART on pins:
-#   rx_pin: GPIO3 (D9)
-#   tx_pin: GPIO1 (D10)
+#   rx_pin: GPIO3
+#   tx_pin: GPIO1
 #
+# CCS811 use i2c on pins:
+#   sda: GPIO4
+#   scl: GPIO5
 # -----------------------------------------------------------------------------
 
 esphome:
@@ -53,9 +56,15 @@ time:
 
 # настроим UART
 uart:
-  rx_pin: GPIO3 #(D9)
-  tx_pin: GPIO1 #(D10)
+  rx_pin: GPIO3
+  tx_pin: GPIO1
   baud_rate: 9600
+
+# настроим i2c
+i2c:
+  sda: GPIO4
+  scl: GPIO5
+  scan: true # If ESPHome should do a search of the I2C address space on startup. Defaults to true.
 
 # СЕНСОРЫ
 sensor:
@@ -68,6 +77,19 @@ sensor:
       name: "d1mini-n2 MH-Z19 Temperature"
     update_interval: 60s
     automatic_baseline_calibration: false
+
+  # CCS811 CO_2 and Volatile Organic Compound Sensor
+  - platform: ccs811
+    eco2:
+      name: "d1mini-n2 CCS811 eCO2 Value"
+    tvoc:
+      name: "d1mini-n2 CCS811 Total Volatile Organic Compound"
+    address: 0x5A
+    update_interval: 60s
+
+  # Static Calibrating Baseline CCS811
+  #- platform: ccs811
+  #  baseline: 0xA483
 
   # системные сенсоры
   - platform: uptime

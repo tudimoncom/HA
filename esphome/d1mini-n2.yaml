@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------------------
 # Wemos d1 mini + MH-Z19B + CCS811
 #
-# DATE: 2021-08-18
+# DATE: 2021-08-22
 #
 # MH-Z19B use UART on pins:
 #   rx_pin: GPIO3
@@ -10,6 +10,9 @@
 # CCS811 use i2c on pins:
 #   sda: GPIO4
 #   scl: GPIO5
+#
+# Фильтрация значений - при uptime_sensor < 600s не передавать значения сенсоров
+#
 # -----------------------------------------------------------------------------
 
 esphome:
@@ -36,6 +39,8 @@ wifi:
   ap:
     ssid: !secret hotspot_wifi_ssid_n2
     password: !secret hotspot_wifi_password_n1
+
+  reboot_timeout: 30min # время ожидания перед перезагрузкой при отсутствии Wi-Fi-соединения
 
 # Captive portal резервный механизм для настройки, если подключение к сконфигурированной WiFi сети не удалось
 captive_portal:
@@ -73,8 +78,14 @@ sensor:
   - platform: mhz19
     co2:
       name: "d1mini-n2 MH-Z19 CO2 Value"
+      filters:
+        - lambda: |-
+            if (id(uptime_sensor).state > 600) return x; else return {};
     temperature:
       name: "d1mini-n2 MH-Z19 Temperature"
+      filters:
+        - lambda: |-
+            if (id(uptime_sensor).state > 600) return x; else return {};
     update_interval: 60s
     automatic_baseline_calibration: false
 
@@ -82,11 +93,19 @@ sensor:
   - platform: ccs811
     eco2:
       name: "d1mini-n2 CCS811 eCO2 Value"
+      filters:
+        - lambda: |-
+            if (id(uptime_sensor).state > 600) return x; else return {};
     tvoc:
       name: "d1mini-n2 CCS811 Total Volatile Organic Compound"
+      filters:
+        - lambda: |-
+            if (id(uptime_sensor).state > 600) return x; else return {};
     address: 0x5A
     update_interval: 60s
+
   # Static Calibrating Baseline CCS811
+  #- platform: ccs811
   #  baseline: 0xA483
 
   # системные сенсоры

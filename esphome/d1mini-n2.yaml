@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------------------
 # Wemos d1 mini + MH-Z19B + CCS811
 #
-# DATE: 2021-08-22
+# DATE: 2021-09-21
 #
 # MH-Z19B use UART on pins:
 #   rx_pin: GPIO3
@@ -23,6 +23,9 @@ esphome:
 
 # Enable logging
 logger:
+  baud_rate: 0 #disable uart log
+
+# [19:11:25][W][uart:041]: You're using the same serial port for logging and the UART component. Please disable logging over the serial port by setting logger->baud_rate to 0.
 
 # Enable Home Assistant API
 api:
@@ -35,12 +38,12 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
 
+  reboot_timeout: 30min # время ожидания перед перезагрузкой при отсутствии Wi-Fi-соединения
+
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
     ssid: !secret hotspot_wifi_ssid_n2
     password: !secret hotspot_wifi_password_n1
-
-  reboot_timeout: 30min # время ожидания перед перезагрузкой при отсутствии Wi-Fi-соединения
 
 # Captive portal резервный механизм для настройки, если подключение к сконфигурированной WiFi сети не удалось
 captive_portal:
@@ -79,14 +82,20 @@ sensor:
     co2:
       name: "d1mini-n2 MH-Z19 CO2 Value"
       filters:
+        # костыль 1 - отфильтруем скачки при старте ESP
         - lambda: |-
             if (id(uptime_sensor).state > 600) return x; else return {};
+        # костыль 2 - отфильтруем одиночные скачки
+        - median:
+            window_size: 7
+            send_every: 7
+            send_first_at: 1
     temperature:
       name: "d1mini-n2 MH-Z19 Temperature"
       filters:
         - lambda: |-
             if (id(uptime_sensor).state > 600) return x; else return {};
-    update_interval: 60s
+    update_interval: 65s
     automatic_baseline_calibration: false
 
   # CCS811 CO_2 and Volatile Organic Compound Sensor
@@ -103,10 +112,7 @@ sensor:
             if (id(uptime_sensor).state > 600) return x; else return {};
     address: 0x5A
     update_interval: 60s
-
-  # Static Calibrating Baseline CCS811
-  #- platform: ccs811
-  #  baseline: 0xA483
+    #baseline: 0xA483  # Static Calibrating Baseline CCS811
 
   # системные сенсоры
   - platform: uptime

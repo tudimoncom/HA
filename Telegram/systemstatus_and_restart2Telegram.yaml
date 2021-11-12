@@ -1,0 +1,190 @@
+# Home Assistant
+# System status request via Telegram and system reboot
+
+# Запрос статуса системы через Телеграм и перезагрузка системы
+
+####################################################
+#                       СЕНСОРЫ                    #
+####################################################
+
+    sensor:
+
+      - platform: template
+        sensors:
+
+          unavailable_now_light:
+            friendly_name: "Всего недоступных светильников - "
+            #entity_id:
+            #  - sensor.time
+            value_template: "{{states.light | selectattr ('state', 'equalto', 'unavailable') | list | length}}"
+            icon_template: mdi:counter        
+
+          unavailable_now_switch:
+            friendly_name: "Всего недоступных реле - "
+            #entity_id:
+            #  - sensor.time
+            value_template: "{{states.switch | selectattr ('state', 'equalto', 'unavailable') | list | length}}"
+            icon_template: mdi:counter 
+            
+          unavailable_now_sensor:
+            friendly_name: "Всего недоступных сенсоров - "
+            #entity_id:
+            #  - sensor.time
+            value_template: "{{states.sensor | selectattr ('state', 'equalto', 'unavailable') | list | length}}"
+            icon_template: mdi:counter
+            
+          unavailable_now_binary_sensor:
+            friendly_name: "Всего недоступных бинарных сенсоров - "
+            #entity_id:
+            #  - sensor.time
+            value_template: "{{states.binary_sensor | selectattr ('state', 'equalto', 'unavailable') | list | length}}"
+            icon_template: mdi:counter
+            
+####################################################
+#                      СКРИПТЫ                     #
+####################################################
+
+    script:
+                
+      system_report:
+        alias: Отправка отчета о состоянии системы
+        sequence:
+         - service: notify.telegram_admin
+           data:
+             message: | 
+                 {{"\U0001F4AC"}} Состояние системы
+                 
+                 {{"\U0001F567"}} Отчет за {{ states('sensor.time_date') }}
+                 
+                 Pi3b
+                 CPU {{ states('sensor.processor_use') }}% | {{ states('sensor.processor_temperature') }}°C  
+                 Memory free {{ states('sensor.memory_free') }}MiB | use {{ states('sensor.memory_use') }}MiB ({{ states('sensor.memory_use_percent') }}% used)  
+                 Disk free {{ states('sensor.disk_free') }}GiB | use {{ states('sensor.disk_use') }}GiB ({{ states('sensor.disk_use_percent_home') }}% used)
+                 Swap free {{ states('sensor.swap_free') }}MiB | use {{ states('sensor.swap_use') }}MiB ({{ states('sensor.swap_use_percent') }}% used)
+                 RPi Power status {{ states('binary_sensor.rpi_power_status') }}
+                 
+                 HA
+                 StartTime {{ as_timestamp (states('sensor.ha_uptime')) | timestamp_custom('%A %d %h %H:%M') }}
+                 UpTime {{ ((now() | as_timestamp - states('sensor.ha_uptime') | as_timestamp) | int /3600) | round(2) }} h
+                 HA Version {{ states('sensor.ha_version') }}  
+                 Supervisor Version {{ states('sensor.supervisor_version') }}
+                 
+                 ReadyNAS
+                 UpTime {{ states('sensor.nas_uptime') }}
+                 NAS Volume {{ states('sensor.nas_volume_free_gb') }}Gb free from {{ states('sensor.nas_volume_size_gb') }}Gb
+                 
+                 {{"\U0001F4A1"}} Светильников недоступно - {{ states('sensor.unavailable_now_light') }} 
+                 {{"\U0001F50C"}} Свичей недоступно - {{ states('sensor.unavailable_now_switch') }} 
+                 {{"\U0001F321"}} Сенсоров недоступно - {{ states('sensor.unavailable_now_sensor') }} 
+                 {{"\U0001F51F"}} Бинарных сенсоров недоступно - {{ states('sensor.unavailable_now_binary_sensor') }}             
+    
+       unavailable_list_var2:    
+        alias: Отправка отчета о недоступных сущностях var2
+        sequence:
+         - service: notify.telegram_admin
+           data:
+             message: | 
+                 {{"\U0001F6A8"}} Отчет за {{ states('sensor.time_date') }}
+                 {% if (states('sensor.unavailable_now_light') | int > 0) %}
+                 {{"\U0001F4A1"}} Светильников недоступно - {{ states('sensor.unavailable_now_light') }}:
+                 {{ states.light | selectattr('state', 'eq', 'unavailable') | map(attribute="name") | join ("
+                 ") }}
+                 {% endif %}
+                 {% if (states('sensor.unavailable_now_switch') | int > 0) %}
+                 {{"\U0001F50C"}} Свичей недоступно - {{ states('sensor.unavailable_now_switch') }}:
+                 {{ states.switch | selectattr('state', 'eq', 'unavailable') | map(attribute="name") | join ("
+                 ") }}
+                 {% endif %}
+                 {% if (states('sensor.unavailable_now_sensor') | int > 0) %}
+                 {{"\U0001F321"}} Сенсоров недоступно - {{ states('sensor.unavailable_now_sensor') }}:
+                 {{ states.sensor | selectattr('state', 'eq', 'unavailable') | map(attribute="name") | join ("
+                 ") }}
+                 {% endif %}
+                 {% if (states('sensor.unavailable_now_binary_sensor') | int > 0) %}
+                 {{"\U0001F51F"}} Бинарных сенсоров недоступно - {{ states('sensor.unavailable_now_binary_sensor') }}:
+                 {{ states.binary_sensor | selectattr('state', 'eq', 'unavailable') | map(attribute="name") | join ("
+                 ") }}
+                 {% endif %}
+   
+            
+                        
+####################################################
+#                   АВТОМАТИЗАЦИИ                  #
+####################################################
+                        
+    automation:   
+               
+        - id: Запрос на отчет             
+          alias: send_report
+          initial_state: true
+          trigger:
+          - platform: event
+            event_type: telegram_command
+            event_data:
+              command: '/report'
+          action:
+           - service: script.turn_on
+             entity_id: 
+                - script.system_report
+        
+        - id: Перезагрузка НА             
+          alias: restart-ha
+          initial_state: true
+          trigger:
+          - platform: event
+            event_type: telegram_command
+            event_data:
+              command: '/restart-ha'
+          action:
+          - service: notify.telegram_admin
+            data:
+              message: | 
+                 {{"\U000026A0"}} Активация перезгрузки НА 
+          - service: homeassistant.restart
+
+# новое уведомление по датчикам темплэйта
+
+        - id: Уведомление о недоступных сущностях
+          alias: send_unavailable_entity_list
+          trigger:
+          - platform: state
+            entity_id:
+             - sensor.unavailable_now_light
+             - sensor.unavailable_now_switch
+             - sensor.unavailable_now_sensor
+             - sensor.unavailable_now_binary_sensor
+            for: '00:10:00'
+          condition: []
+          action:
+          - service: notify.telegram_admin
+            data:
+              message: | 
+                 {{"\U00002139"}} Триггер:
+                 trigger.platform: {{ trigger.platform }}
+                 entity_id: {{ trigger.entity_id }}
+                 state name: {{ trigger.from_state.attributes.friendly_name }}
+                 from_state: {{ trigger.from_state.state }}   to_state: {{ trigger.to_state.state }}
+          - service: script.turn_on
+            entity_id: script.unavailable_list_var2
+
+######################################
+# командная клавиатура телеграм бота #
+######################################
+        - id: Клавиатура телеграмм бота
+          alias: telegram_keyboard
+          initial_state: true
+          trigger:
+          - platform: event
+            event_type: telegram_command
+            event_data:
+              command: '/start'
+          action:
+          - service: notify.telegram_admin
+            data:
+              message: 'commands'
+              data:
+                keyboard:
+               # inline_keyboard: - тогда можно будет Отчет:/report
+                  - '/report, /restart-ha'
+                  - '/datchiki, /bats, /un, /us'
+                  

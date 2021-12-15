@@ -1,0 +1,293 @@
+# -----------------------------------------------------------------------------
+# sonoff RF bridge 2 + BMP180 (отключен)
+#
+# DATE: 2021-12-15
+#
+# RF on pins:
+#   rx_pin: GPIO3
+#   tx_pin: GPIO1
+#
+# BMP180 use i2c on pins:
+#   sda: GPIO5
+#   scl: GPIO4
+#
+# -----------------------------------------------------------------------------
+
+esphome:
+  name: rfbridge2
+  comment: Sonoff RF Bridge 2
+  platform: ESP8266
+  board: esp8285
+
+# Enable logging
+logger:
+  baud_rate: 0 #disable uart log
+
+ota:
+  password: !secret ota_password_rfbridge2
+  
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  reboot_timeout: 30min # время ожидания перед перезагрузкой при отсутствии Wi-Fi-соединения
+  power_save_mode: none
+  
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: !secret hotspot_wifi_ssid_rfbridge2
+    password: !secret hotspot_wifi_password_n1
+
+# Captive portal резервный механизм для настройки, если подключение к сконфигурированной WiFi сети не удалось
+captive_portal:
+
+# включим Web server
+web_server:
+  port: 80
+#  auth:
+#    username: admin
+#    password: !secret web_server_password
+
+# Get the time from Home Assistant to sync the onboard real-time clock.
+time:
+  - platform: homeassistant
+    id: esptime
+    
+# СИСТЕМНЫЕ ШИНЫ
+
+# настроим UART
+uart:
+  tx_pin: GPIO01
+  rx_pin: GPIO03
+  baud_rate: 19200
+
+# настроим i2c
+i2c:
+  sda: GPIO5
+  scl: GPIO4
+  scan: True
+
+# Enable Home Assistant API
+api:
+  password: !secret api_password_rfbridge2
+  services:
+    - service: send_code
+      variables:
+        sync: int
+        low: int
+        high: int
+        code: int
+      then:
+        - rf_bridge.send_code:
+            sync: !lambda 'return sync;'
+            low: !lambda 'return low;'
+            high: !lambda 'return high;'
+            code: !lambda 'return code;'
+    - service: learn
+      then:
+        - rf_bridge.learn
+
+rf_bridge:
+  on_code_received:
+    then:
+      # отправка события в НА
+      - homeassistant.event:
+          event: esphome.rf_code_received
+          data:
+            sync: !lambda 'char buffer [10];return itoa(data.sync,buffer,16);'
+            low: !lambda 'char buffer [10];return itoa(data.low,buffer,16);'
+            high: !lambda 'char buffer [10];return itoa(data.high,buffer,16);'
+            code: !lambda 'char buffer [10];return itoa(data.code,buffer,16);'
+      
+      # обновим сенсор последний код
+      - text_sensor.template.publish:
+          id: last_code
+          state: !lambda 'char buffer [16];return itoa(data.code,buffer,16);'
+      
+      # коды кнопок A,B,C,D пульта      
+      - if:
+          condition:
+            lambda: |-
+              return data.code == 0x0******;
+          then:
+            - binary_sensor.template.publish:
+                id: pult_a
+                state: ON
+            - delay: 5s
+            - binary_sensor.template.publish:
+                id: pult_a
+                state: OFF
+      - if:
+          condition:
+            lambda: |-
+              return data.code == 0x0******;
+          then:
+            - binary_sensor.template.publish:
+                id: pult_b
+                state: ON
+            - delay: 5s
+            - binary_sensor.template.publish:
+                id: pult_b
+                state: OFF
+      - if:
+          condition:
+            lambda: |-
+              return data.code == 0x0******;
+          then:
+            - binary_sensor.template.publish:
+                id: pult_c
+                state: ON
+            - delay: 5s
+            - binary_sensor.template.publish:
+                id: pult_c
+                state: OFF
+      - if:
+          condition:
+            lambda: |-
+              return data.code == 0x0******;
+          then:
+            - binary_sensor.template.publish:
+                id: pult_d
+                state: ON
+            - delay: 5s
+            - binary_sensor.template.publish:
+                id: pult_d
+                state: OFF
+
+      # датчик дыма на кухне
+      - if:
+          condition:
+            lambda: |-
+              return data.code == 0x0******;
+          then:
+            - binary_sensor.template.publish:
+                id: kitchen_smoke
+                state: ON
+      - if:
+          condition:
+            lambda: |-
+              return data.code == 0x0******;
+          then:
+            - binary_sensor.template.publish:
+                id: kitchen_smoke
+                state: OFF
+    
+light:
+  - platform: binary
+    name: "RFbridge2 WiFi LED"
+    id: wifi_led
+    output: output_wifi_led
+    internal: True
+
+output:
+  - platform: gpio
+    pin:
+      number: GPIO13
+      inverted: True
+    id: output_wifi_led
+
+binary_sensor:
+  - platform: status
+    name: "RFbridge2 Status"
+    on_state:
+      then:
+        - light.toggle: wifi_led
+        
+  - platform: gpio
+    pin: GPIO00
+    name: "RFbridge2 Pairing Button"
+
+  - platform: template
+    name: 'Pult A'
+    id: pult_a
+    #device_class: door
+  
+  - platform: template
+    name: 'Pult B'
+    id: pult_b
+    
+  - platform: template
+    name: 'Pult C'
+    id: pult_c
+  
+  - platform: template
+    name: 'Pult D'
+    id: pult_d
+    
+  - platform: template
+    name: 'kitchen smoke'
+    id: kitchen_smoke
+    
+
+sensor:
+
+  # системные сенсоры    
+  - platform: wifi_signal
+    name: "RFbridge2 WiFi Signal"
+    
+  - platform: uptime
+    name: "RFbridge2 Uptime Sensor"
+    id: uptime_sensor
+    update_interval: 60s
+    on_raw_value:
+      then:
+        - text_sensor.template.publish:
+            id: uptime_human
+            state: !lambda |-
+              int seconds = round(id(uptime_sensor).raw_state);
+              int days = seconds / (24 * 3600);
+              seconds = seconds % (24 * 3600);
+              int hours = seconds / 3600;
+              seconds = seconds % 3600;
+              int minutes = seconds /  60;
+              seconds = seconds % 60;
+              return (
+                (days ? String(days) + "d " : "") +
+                (hours ? String(hours) + "h " : "") +
+                (minutes ? String(minutes) + "m " : "") +
+                (String(seconds) + "s")
+              ).c_str();    
+
+#  - platform: bme280
+#    temperature:
+#      name: "BME280 Temperature"
+#      id: bme280_temperature
+#      #filters:
+#      #  - lambda: |-
+#      #      if (id(uptime_seconds).state > 600) return x; else return {};
+#    pressure:
+#      name: "BME280 Pressure"
+#      id: bme280_pressure
+#    humidity:
+#      name: "BME280 Relative Humidity"
+#      id: bme280_humidity
+#    address: 0x76
+#    update_interval: 60s
+
+# ТЕКСТОВЫЕ СЕНСОРЫ 
+text_sensor:
+  - platform: version
+    name: "RFbridge2 Version"
+    
+  - platform: wifi_info
+    ip_address:
+      name: "RFbridge2 IP Address"
+
+  # Human readable Uptime sensor
+  - platform: template
+    name: "RFbridge2 Uptime Human Readable"
+    id: uptime_human
+    icon: mdi:clock-start
+
+  # полученный код
+  - platform: template
+    name: "RFbridge2 last received code"
+    id: last_code
+  
+  
+# ПЕРЕКЛЮЧАТЕЛИ
+switch:
+
+  # программный переключатель, который позволит нам перезагрузить устройство из Home Assistant (или путем публикации вручную в MQTT или API)
+  - platform: restart
+    name: "RFbridge2 Restart"

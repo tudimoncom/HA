@@ -1,0 +1,28 @@
+type: custom:flex-table-card
+clickable: false
+entities:
+  include:
+    - sensor.battery*
+    - sensor.*battery
+sort_by: state
+columns:
+  - data: friendly_name
+    name: Friendly Name
+  - data: state
+    name: '%'
+  - data: battery_type
+    name: Type
+  - data: battery_change
+    name: Replaced
+    modify: >
+      var dt = new Date(x); var days = parseInt((Date.now()-Date.parse(x)) /
+      86400000); var hrs = parseInt((Date.now()-Date.parse(x)) / 3600000); var
+      min = parseInt(((Date.now()-Date.parse(x)) / 60000) % 60); var sec =
+      parseInt(((Date.now()-Date.parse(x)) / 1000) % 60); hrs = (hrs < 10) ? "0"
+      + hrs : hrs; min = (min < 10) ? "0" + min : min; sec = (sec < 10) ? "0" +
+      sec : sec; isFinite(dt) ? "" + days + " days ago" : ""
+css:
+  table+: 'padding-top: 15px;'
+  tbody tr:nth-child(even): 'background-color: #a2542f6;'
+  td.left: 'padding: 10px 10px 10px 10px'
+  th.left: 'padding: 0px 0px 10px 10px'

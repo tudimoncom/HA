@@ -25,7 +25,7 @@ trendsalarms:
           sample_duration: 300 # 5 минут = 300 сек
           max_samples: 15  # 5 минут, 3 изменения в минуту, то 300/20 = 15
           min_gradient: 0.03 # 10% в 5 минут, то 10/5*60 = 0,03(3)
-          #device_class: heat
+          device_class: moisture
 
         ### кухня ####
         kitchen_temp_sharp_jump:
@@ -42,7 +42,7 @@ trendsalarms:
           sample_duration: 300 # 5 минут = 300 сек
           max_samples: 15  # 5 минут, 3 изменения в минуту, то 300/20 = 15
           min_gradient: 0.03 # 10% в 5 минут, то 10/5*60 = 0,03(3)
-          #device_class: heat
+          device_class: moisture
 
 ####################################################
 #                   АВТОМАТИЗАЦИИ                  #

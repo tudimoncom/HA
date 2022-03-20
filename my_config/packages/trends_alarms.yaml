@@ -139,6 +139,7 @@ trendsalarms:
                   - service: notify.mobile_app_mi_9_lite
                     data:
                       title: "Trends alarm" 
+                      channel: "alarm_stream"
                       message: | 
                          {{"\U0001F4B9"}} bathroom_temp_sharp_jump = {{ states('binary_sensor.bathroom_temp_sharp_jump') }}
                          {{"\U00002139"}}   {{ states('sensor.0x1************a_temperature') }}°C
@@ -156,6 +157,7 @@ trendsalarms:
                   - service: notify.mobile_app_mi_9_lite
                     data:
                       title: "Trends alarm" 
+                      channel: "alarm_stream"
                       message: | 
                          {{"\U0001F4B9"}} bathroom_humidity_sharp_jump = {{ states('binary_sensor.bathroom_humidity_sharp_jump') }}
                          {{"\U00002139"}}   {{ states('sensor.0x1************a_humidity') }}% 
@@ -173,6 +175,7 @@ trendsalarms:
                   - service: notify.mobile_app_mi_9_lite
                     data:
                       title: "Trends alarm" 
+                      channel: "alarm_stream"
                       message: | 
                          {{"\U0001F4B9"}} kitchen_temp_sharp_jump = {{ states('binary_sensor.kitchen_temp_sharp_jump') }}
                          {{"\U00002139"}}   {{ states('sensor.0x1************b_temperature') }}°C
@@ -190,6 +193,7 @@ trendsalarms:
                   - service: notify.mobile_app_mi_9_lite
                     data:
                       title: "Trends alarm" 
+                      channel: "alarm_stream"
                       message: | 
                          {{"\U0001F4B9"}} kitchen_humidity_sharp_jump = {{ states('binary_sensor.kitchen_humidity_sharp_jump') }}
                          {{"\U00002139"}}   {{ states('sensor.0x1************b_humidity') }}% 
@@ -207,6 +211,7 @@ trendsalarms:
                   - service: notify.mobile_app_mi_9_lite
                     data:
                       title: "Trends alarm" 
+                      channel: "alarm_stream"
                       message: | 
                          {{"\U0001F4B9"}} serverroom_temp_sharp_jump = {{ states('binary_sensor.serverroom_temp_sharp_jump') }}
                          {{"\U00002139"}}   {{ states('sensor.0x1************c_temperature') }}°C
@@ -224,6 +229,7 @@ trendsalarms:
                   - service: notify.mobile_app_mi_9_lite
                     data:
                       title: "Trends alarm" 
+                      channel: "alarm_stream"
                       message: | 
                          {{"\U0001F4B9"}} serverroom_humidity_sharp_jump = {{ states('binary_sensor.serverroom_humidity_sharp_jump') }}
                          {{"\U00002139"}}   {{ states('sensor.0x1************c_humidity') }}% 

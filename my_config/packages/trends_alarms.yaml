@@ -67,8 +67,8 @@ trendsalarms:
                         
   automation:   
     
-      - id: alarm trends
-        alias: alarm_trends
+      - id: alarm_trends
+        alias: alarm trends t_h
         description: Уведомление о скачке температуры или влажности
         mode: single
         trigger:

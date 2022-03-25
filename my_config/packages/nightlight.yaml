@@ -1,0 +1,129 @@
+# пакет ночник в спальне
+nightlight:
+
+####################################################
+#  Ночник в спальне  новый на таймере а не delay   #
+####################################################
+    input_number:
+      nightlight_timer_minutes:
+        name: "Timer (мин)"          # имя
+        min: 0                       # значение ОТ
+        max: 60                      # значение ДО
+        step: 5                      # шаг
+        icon: mdi:timer-cog-outline  # иконка
+      nightlight_timer_hours:
+        name: "Timer (час)"          # имя
+        min: 0                       # значение ОТ
+        max: 12                      # значение ДО
+        step: 1                      # шаг
+        icon: mdi:timer-cog          # иконка
+      nightlight_level:
+        name: "яркость ночник (%)"   # имя
+        min: 1                       # значение ОТ
+        max: 100                     # значение ДО
+        step: 1                      # шаг
+        icon: mdi:brightness-percent # иконка
+
+    input_boolean:
+      nightlight_timer_enabled:
+        name: "Ночник вкл"           # имя
+        initial: off                 # начальное значение
+        icon: mdi:timelapse          # иконка
+        
+    timer:
+      nightlight_timer:
+        duration: "00:01:30"
+    
+    template:
+      - sensor:
+        - name: "Hoчник включен до"
+          #unit_of_measurement: ""
+          state: >
+            
+            {{ (now().timestamp() + states('input_number.nightlight_timer_hours') | int *60*60 + states('input_number.nightlight_timer_minutes') | int *60) | timestamp_custom('%Y-%m-%d %H:%M:%S') }}
+
+
+####################################################
+#                   АВТОМАТИЗАЦИИ                  #
+####################################################
+
+
+                    
+    automation:   
+    
+        - id: nightlight_control
+          alias: nightlight_control
+          description: Управление ночником
+          trigger:
+            - platform: state
+              entity_id: input_boolean.nightlight_timer_enabled
+              to: 'on'
+              id: nightlight_on
+            - platform: state
+              entity_id: input_boolean.nightlight_timer_enabled
+              id: nightlight_off
+              to: 'off'
+            - platform: event
+              event_type: timer.finished
+              event_data:
+                entity_id: timer.nightlight_timer
+              id: nightlight_timer_finished
+          condition: []
+          action:
+            - choose:
+                
+                - conditions:
+                    - condition: trigger
+                      id: nightlight_on
+                  sequence:
+                    - service: timer.start
+                      data: 
+                        duration: "{{ states('input_number.nightlight_timer_hours') | int *60*60 + states('input_number.nightlight_timer_minutes') | int *60 }}"
+                      target:
+                        entity_id: timer.nightlight_timer
+                    - service: light.turn_on
+                      target:
+                        entity_id: light.yeelight_color_0x0***************d
+                      data:
+                        brightness_pct: '{{ states(''input_number.nightlight_level'') | int }}'
+                        rgb_color:
+                          - 255
+                          - 126
+                          - 0
+                    - service: notify.me
+                      data:
+                        message: >-
+                          Ночник в спальне включен в {{ states('sensor.time') }} на {{
+                          states('input_number.nightlight_timer_hours') | int }} часов {{
+                          states('input_number.nightlight_timer_minutes') | int }} минут. Яркость {{
+                          states('input_number.nightlight_level') }}%.
+                    
+                    
+                - conditions:
+                    - condition: trigger
+                      id: nightlight_off
+                  sequence:
+                    - service: timer.cancel
+                      target:
+                        entity_id: timer.nightlight_timer
+                    - type: turn_off
+                      device_id: c********************************9
+                      entity_id: light.yeelight_color_0x0***************d
+                      domain: light
+                      brightness_pct: 0
+                
+                - conditions:
+                    - condition: trigger
+                      id: nightlight_timer_finished
+                  sequence:
+                    - type: turn_off
+                      device_id: c********************************9
+                      entity_id: light.yeelight_color_0x0***************d
+                      domain: light
+                      brightness_pct: 0
+                    - service: input_boolean.turn_off
+                      data:
+                        entity_id: input_boolean.nightlight_timer_enabled   
+                        
+          mode: single
+   

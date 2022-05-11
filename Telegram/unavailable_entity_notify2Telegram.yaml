@@ -14,30 +14,23 @@
 
           unavailable_now_light:
             friendly_name: "Всего недоступных светильников - "
-            entity_id:
-              - sensor.time
-            value_template: "{{states.light | selectattr ('state', 'equalto', 'unavailable') | list | length}}"
+            value_template: "{{states.light | selectattr ('state', 'equalto', 'unavailable') | rejectattr('name','match','4GOOD*') | list | length}}"
+            # rejectattr('name','match','4GOOD*') - исключить сенсоры планшета 4GOOD*
             icon_template: mdi:counter        
 
           unavailable_now_switch:
             friendly_name: "Всего недоступных реле - "
-            entity_id:
-              - sensor.time
-            value_template: "{{states.switch | selectattr ('state', 'equalto', 'unavailable') | list | length}}"
+            value_template: "{{states.switch | selectattr ('state', 'equalto', 'unavailable') | rejectattr('name','match','4GOOD*') | list | length}}"
             icon_template: mdi:counter 
             
           unavailable_now_sensor:
             friendly_name: "Всего недоступных сенсоров - "
-            entity_id:
-              - sensor.time
-            value_template: "{{states.sensor | selectattr ('state', 'equalto', 'unavailable') | list | length}}"
+            value_template: "{{states.sensor | selectattr ('state', 'equalto', 'unavailable') | rejectattr('name','match','4GOOD*') | list | length}}"
             icon_template: mdi:counter
             
           unavailable_now_binary_sensor:
             friendly_name: "Всего недоступных бинарных сенсоров - "
-            entity_id:
-              - sensor.time
-            value_template: "{{states.binary_sensor | selectattr ('state', 'equalto', 'unavailable') | list | length}}"
+            value_template: "{{states.binary_sensor | selectattr ('state', 'equalto', 'unavailable') | rejectattr('name','match','4GOOD*') | list | length}}"
             icon_template: mdi:counter
             
             
@@ -73,22 +66,22 @@
                  {{"\U0001F6A8"}} Отчет за {{ states('sensor.time_date') }}
                  {% if (states('sensor.unavailable_now_light') | int > 0) %}
                  {{"\U0001F4A1"}} Светильников недоступно - {{ states('sensor.unavailable_now_light') }}:
-                 {{ states.light | selectattr('state', 'eq', 'unavailable') | map(attribute="name") | join ("
+                 {{ states.light | selectattr('state', 'eq', 'unavailable') | map(attribute="name") | reject('match', '4GOOD*') | join ("
                  ") }}
                  {% endif %}
                  {% if (states('sensor.unavailable_now_switch') | int > 0) %}
                  {{"\U0001F50C"}} Свичей недоступно - {{ states('sensor.unavailable_now_switch') }}:
-                 {{ states.switch | selectattr('state', 'eq', 'unavailable') | map(attribute="name") | join ("
+                 {{ states.switch | selectattr('state', 'eq', 'unavailable') | map(attribute="name") | reject('match', '4GOOD*') | join ("
                  ") }}
                  {% endif %}
                  {% if (states('sensor.unavailable_now_sensor') | int > 0) %}
                  {{"\U0001F321"}} Сенсоров недоступно - {{ states('sensor.unavailable_now_sensor') }}:
-                 {{ states.sensor | selectattr('state', 'eq', 'unavailable') | map(attribute="name") | join ("
+                 {{ states.sensor | selectattr('state', 'eq', 'unavailable') | map(attribute="name") | reject('match', '4GOOD*') | join ("
                  ") }}
                  {% endif %}
                  {% if (states('sensor.unavailable_now_binary_sensor') | int > 0) %}
                  {{"\U0001F51F"}} Бинарных сенсоров недоступно - {{ states('sensor.unavailable_now_binary_sensor') }}:
-                 {{ states.binary_sensor | selectattr('state', 'eq', 'unavailable') | map(attribute="name") | join ("
+                 {{ states.binary_sensor | selectattr('state', 'eq', 'unavailable') | map(attribute="name") | reject('match', '4GOOD*') | join ("
                  ") }}
                  {% endif %}
                         

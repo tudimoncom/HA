@@ -1,0 +1,712 @@
+# пакет отслеживания потребления электричества розетками 
+# и расчета стоимости электричества
+electricityutilitymeter:
+
+####################################################
+#                       СЕНСОРЫ                    #
+####################################################
+
+  binary_sensor:
+  
+  
+####################################################
+#                     Utility Meter                #
+####################################################
+  
+  utility_meter:
+    # SPlug serv
+    um_splug_serv_daily:
+      source: sensor.0x1************a_energy
+      cycle: daily
+      tariffs:
+        - day
+        - night
+    
+    um_splug_serv_monthly:
+      source: sensor.0x1************a_energy
+      cycle: monthly
+      tariffs:
+        - day
+        - night  
+      
+    um_splug_serv_yearly:
+      source: sensor.0x1************a_energy
+      cycle: yearly
+      tariffs:
+        - day
+        - night  
+
+    # WallOutlet Artur Comp
+    um_woutlet_desktop_daily:
+      source: sensor.0x1************5_energy
+      cycle: daily
+      tariffs:
+        - day
+        - night
+    
+    um_woutlet_desktop_monthly:
+      source: sensor.0x1************5_energy
+      cycle: monthly
+      tariffs:
+        - day
+        - night  
+      
+    um_woutlet_desktop_yearly:
+      source: sensor.0x1************5_energy
+      cycle: yearly
+      tariffs:
+        - day
+        - night          
+        
+    # SPlug TV
+    um_splug_tv_daily:
+      source: sensor.0x1************4_energy
+      cycle: daily
+      tariffs:
+        - day
+        - night
+    
+    um_splug_tv_monthly:
+      source: sensor.0x1************4_energy
+      cycle: monthly
+      tariffs:
+        - day
+        - night  
+      
+    um_splug_tv_yearly:
+      source: sensor.0x1************4_energy
+      cycle: yearly
+      tariffs:
+        - day
+        - night          
+
+####################################################
+#      "константы" стоимость электроэнергии        #
+####################################################
+
+  input_number:
+    price_electricity_day:
+      name: "Стоимость эл.эн. день"   # имя
+      min: 4.27                       # значение ОТ
+      max: 4.29                       # значение ДО
+      initial: 4.28                   # начальное значение
+      unit_of_measurement: "р."       # единица измерения
+      icon: mdi:currency-rub          # иконка
+        
+    price_electricity_night:
+      name: "Стоимость эл.эн. ночь"   # имя
+      min: 2.35                       # значение ОТ
+      max: 2.37                       # значение ДО
+      initial: 2.36                   # начальное значение
+      unit_of_measurement: "р."       # единица измерения
+      icon: mdi:currency-rub          # иконка
+        
+####################################################
+#              TEMPLATE CЕНСОРЫ                    #
+####################################################
+
+  template:
+    - sensor:
+    
+    # вычленим атрибут прошлый период
+    # вчера
+        - name: "um_splug_serv_daily_day_yesterday"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ state_attr('sensor.um_splug_serv_daily_day', 'last_period') }}"
+
+        - name: "um_splug_serv_daily_night_yesterday"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ state_attr('sensor.um_splug_serv_daily_night', 'last_period') }}"
+
+        - name: "um_splug_tv_daily_day_yesterday"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ state_attr('sensor.um_splug_tv_daily_day', 'last_period') }}"
+
+        - name: "um_splug_tv_daily_night_yesterday"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ state_attr('sensor.um_splug_tv_daily_night', 'last_period') }}"
+
+        - name: "um_woutlet_desktop_daily_day_yesterday"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ state_attr('sensor.um_woutlet_desktop_daily_day', 'last_period') }}"
+
+        - name: "um_woutlet_desktop_daily_night_yesterday"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ state_attr('sensor.um_woutlet_desktop_daily_night', 'last_period') }}"
+    
+    # прошлый месяц
+        - name: "um_splug_serv_monthly_day_lastmonth"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ state_attr('sensor.um_splug_serv_monthly_day', 'last_period') }}"
+
+        - name: "um_splug_serv_monthly_night_lastmonth"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ state_attr('sensor.um_splug_serv_monthly_night', 'last_period') }}"
+
+        - name: "um_splug_tv_monthly_day_lastmonth"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ state_attr('sensor.um_splug_tv_monthly_day', 'last_period') }}"
+
+        - name: "um_splug_tv_monthly_night_lastmonth"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ state_attr('sensor.um_splug_tv_monthly_night', 'last_period') }}"
+
+        - name: "um_woutlet_desktop_monthly_day_lastmonth"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ state_attr('sensor.um_woutlet_desktop_monthly_day', 'last_period') }}"
+
+        - name: "um_woutlet_desktop_monthly_night_lastmonth"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ state_attr('sensor.um_woutlet_desktop_monthly_night', 'last_period') }}"
+
+    # прошлый год
+        - name: "um_splug_serv_yearly_day_lastyear"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ state_attr('sensor.um_splug_serv_yearly_day', 'last_period') }}"
+
+        - name: "um_splug_serv_yearly_night_lastyear"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ state_attr('sensor.um_splug_serv_yearly_night', 'last_period') }}"
+
+        - name: "um_splug_tv_yearly_day_lastyear"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ state_attr('sensor.um_splug_tv_yearly_day', 'last_period') }}"
+
+        - name: "um_splug_tv_yearly_night_lastyear"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ state_attr('sensor.um_splug_tv_yearly_night', 'last_period') }}"
+
+        - name: "um_woutlet_desktop_yearly_day_lastyear"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ state_attr('sensor.um_woutlet_desktop_yearly_day', 'last_period') }}"
+
+        - name: "um_woutlet_desktop_yearly_night_lastyear"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ state_attr('sensor.um_woutlet_desktop_yearly_night', 'last_period') }}"
+
+    #########################################
+    # стоимость сегодня - вчера по розеткам #
+    #########################################
+
+    # SPlug serv
+    # стоимость сегодня - день/ночь
+        - name: "um_splug_serv_daily_cost_day"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_splug_serv_daily_day') | float) * states('input_number.price_electricity_day') | float ) |round(2) }}"
+
+        - name: "um_splug_serv_daily_cost_night"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_splug_serv_daily_night') | float) * states('input_number.price_electricity_night') | float ) |round(2) }}"
+
+    # стоимость сегодня - сумма
+        - name: "um_splug_serv_daily_cost_sum"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ (states('sensor.um_splug_serv_daily_cost_day') | float + states('sensor.um_splug_serv_daily_cost_night') | float ) |round(2) }}"
+
+    # потребление сегодня сумма
+        - name: "um_splug_serv_daily_sum"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ (states('sensor.um_splug_serv_daily_day') | float + states('sensor.um_splug_serv_daily_night') | float) |round(2) }}"
+    
+    # стоимость вчера - день/ночь
+        - name: "um_splug_serv_daily_cost_day_yesterday"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_splug_serv_daily_day_yesterday') | float) * states('input_number.price_electricity_day') | float ) |round(2) }}"
+
+        - name: "um_splug_serv_daily_cost_night_yesterday"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_splug_serv_daily_night_yesterday') | float) * states('input_number.price_electricity_night') | float ) |round(2) }}"
+
+    # стоимость вчера - сумма
+        - name: "um_splug_serv_daily_cost_sum_yesterday"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ (states('sensor.um_splug_serv_daily_cost_day_yesterday') | float + states('sensor.um_splug_serv_daily_cost_night_yesterday') | float) |round(2) }}"
+
+    # потребление вчера сумма
+        - name: "um_splug_serv_daily_sum_yesterday"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ (states('sensor.um_splug_serv_daily_day_yesterday') | float + states('sensor.um_splug_serv_daily_night_yesterday') | float) |round(2) }}"
+
+    # SPlug TV
+    # стоимость сегодня - день/ночь
+        - name: "um_splug_tv_daily_cost_day"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_splug_tv_daily_day') | float) * states('input_number.price_electricity_day') | float ) |round(2) }}"
+
+        - name: "um_splug_tv_daily_cost_night"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_splug_tv_daily_night') | float) * states('input_number.price_electricity_night') | float ) |round(2) }}"
+
+    # стоимость сегодня - сумма
+        - name: "um_splug_tv_daily_cost_sum"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ (states('sensor.um_splug_tv_daily_cost_day') | float + states('sensor.um_splug_tv_daily_cost_night') | float ) |round(2) }}"
+
+    # потребление сегодня сумма
+        - name: "um_splug_tv_daily_sum"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ (states('sensor.um_splug_tv_daily_day') | float + states('sensor.um_splug_tv_daily_night') | float) |round(2) }}"
+    
+    # стоимость вчера - день/ночь
+        - name: "um_splug_tv_daily_cost_day_yesterday"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_splug_tv_daily_day_yesterday') | float) * states('input_number.price_electricity_day') | float ) |round(2) }}"
+
+        - name: "um_splug_tv_daily_cost_night_yesterday"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_splug_tv_daily_night_yesterday') | float) * states('input_number.price_electricity_night') | float ) |round(2) }}"
+
+    # стоимость вчера - сумма
+        - name: "um_splug_tv_daily_cost_sum_yesterday"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ (states('sensor.um_splug_tv_daily_cost_day_yesterday') | float + states('sensor.um_splug_tv_daily_cost_night_yesterday') | float) |round(2) }}"
+
+    # потребление вчера сумма
+        - name: "um_splug_tv_daily_sum_yesterday"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ (states('sensor.um_splug_tv_daily_day_yesterday') | float + states('sensor.um_splug_tv_daily_night_yesterday') | float) |round(2) }}"
+
+    # WOutlet desktop
+    # стоимость сегодня - день/ночь
+        - name: "um_woutlet_desktop_daily_cost_day"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_woutlet_desktop_daily_day') | float) * states('input_number.price_electricity_day') | float ) |round(2) }}"
+
+        - name: "um_woutlet_desktop_daily_cost_night"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_woutlet_desktop_daily_night') | float) * states('input_number.price_electricity_night') | float ) |round(2) }}"
+
+    # стоимость сегодня - сумма
+        - name: "um_woutlet_desktop_daily_cost_sum"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ (states('sensor.um_woutlet_desktop_daily_cost_day') | float + states('sensor.um_woutlet_desktop_daily_cost_night') | float ) |round(2) }}"
+
+    # потребление сегодня сумма
+        - name: "um_woutlet_desktop_daily_sum"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ (states('sensor.um_woutlet_desktop_daily_day') | float + states('sensor.um_woutlet_desktop_daily_night') | float) |round(2) }}"
+    
+    # стоимость вчера - день/ночь
+        - name: "um_woutlet_desktop_daily_cost_day_yesterday"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_woutlet_desktop_daily_day_yesterday') | float) * states('input_number.price_electricity_day') | float ) |round(2) }}"
+
+        - name: "um_woutlet_desktop_daily_cost_night_yesterday"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_woutlet_desktop_daily_night_yesterday') | float) * states('input_number.price_electricity_night') | float ) |round(2) }}"
+
+    # стоимость вчера - сумма
+        - name: "um_woutlet_desktop_daily_cost_sum_yesterday"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ (states('sensor.um_woutlet_desktop_daily_cost_day_yesterday') | float + states('sensor.um_woutlet_desktop_daily_cost_night_yesterday') | float) |round(2) }}"
+
+    # потребление вчера сумма
+        - name: "um_woutlet_desktop_daily_sum_yesterday"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ (states('sensor.um_woutlet_desktop_daily_day_yesterday') | float + states('sensor.um_woutlet_desktop_daily_night_yesterday') | float) |round(2) }}"
+
+    #################################################
+    # стоимость текущий - прошлый месяц по розеткам #
+    #################################################
+
+    # SPlug serv
+    # стоимость текущий месяц - день/ночь
+        - name: "um_splug_serv_monthly_cost_day"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_splug_serv_monthly_day') | float) * states('input_number.price_electricity_day') | float ) |round(2) }}"
+
+        - name: "um_splug_serv_monthly_cost_night"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_splug_serv_monthly_night') | float) * states('input_number.price_electricity_night') | float ) |round(2) }}"
+
+    # стоимость текущий месяц - сумма
+        - name: "um_splug_serv_monthly_cost_sum"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ (states('sensor.um_splug_serv_monthly_cost_day') | float + states('sensor.um_splug_serv_monthly_cost_night') | float ) |round(2) }}"
+
+    # потребление текущий месяц сумма
+        - name: "um_splug_serv_monthly_sum"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ (states('sensor.um_splug_serv_monthly_day') | float + states('sensor.um_splug_serv_monthly_night') | float) |round(2) }}"
+    
+    # стоимость прошлый месяц - день/ночь
+        - name: "um_splug_serv_monthly_cost_day_lastmonth"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_splug_serv_monthly_day_lastmonth') | float) * states('input_number.price_electricity_day') | float ) |round(2) }}"
+
+        - name: "um_splug_serv_monthly_cost_night_lastmonth"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_splug_serv_monthly_night_lastmonth') | float) * states('input_number.price_electricity_night') | float ) |round(2) }}"
+
+    # стоимость прошлый месяц - сумма
+        - name: "um_splug_serv_monthly_cost_sum_lastmonth"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ (states('sensor.um_splug_serv_monthly_cost_day_lastmonth') | float + states('sensor.um_splug_serv_monthly_cost_night_lastmonth') | float) |round(2) }}"
+
+    # потребление прошлый месяц сумма
+        - name: "um_splug_serv_monthly_sum_lastmonth"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ (states('sensor.um_splug_serv_monthly_day_lastmonth') | float + states('sensor.um_splug_serv_monthly_night_lastmonth') | float) |round(2) }}"
+
+    # SPlug TV
+    # стоимость текущий месяц - день/ночь
+        - name: "um_splug_tv_monthly_cost_day"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_splug_tv_monthly_day') | float) * states('input_number.price_electricity_day') | float ) |round(2) }}"
+
+        - name: "um_splug_tv_monthly_cost_night"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_splug_tv_monthly_night') | float) * states('input_number.price_electricity_night') | float ) |round(2) }}"
+
+    # стоимость текущий месяц - сумма
+        - name: "um_splug_tv_monthly_cost_sum"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ (states('sensor.um_splug_tv_monthly_cost_day') | float + states('sensor.um_splug_tv_monthly_cost_night') | float ) |round(2) }}"
+
+    # потребление текущий месяц сумма
+        - name: "um_splug_tv_monthly_sum"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ (states('sensor.um_splug_tv_monthly_day') | float + states('sensor.um_splug_tv_monthly_night') | float) |round(2) }}"
+    
+    # стоимость прошлый месяц - день/ночь
+        - name: "um_splug_tv_monthly_cost_day_lastmonth"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_splug_tv_monthly_day_lastmonth') | float) * states('input_number.price_electricity_day') | float ) |round(2) }}"
+
+        - name: "um_splug_tv_monthly_cost_night_lastmonth"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_splug_tv_monthly_night_lastmonth') | float) * states('input_number.price_electricity_night') | float ) |round(2) }}"
+
+    # стоимость прошлый месяц - сумма
+        - name: "um_splug_tv_monthly_cost_sum_lastmonth"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ (states('sensor.um_splug_tv_monthly_cost_day_lastmonth') | float + states('sensor.um_splug_tv_monthly_cost_night_lastmonth') | float) |round(2) }}"
+
+    # потребление прошлый месяц сумма
+        - name: "um_splug_tv_monthly_sum_lastmonth"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ (states('sensor.um_splug_tv_monthly_day_lastmonth') | float + states('sensor.um_splug_tv_monthly_night_lastmonth') | float) |round(2) }}"
+
+    # WOutlet desktop
+    # стоимость текущий месяц - день/ночь
+        - name: "um_woutlet_desktop_monthly_cost_day"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_woutlet_desktop_monthly_day') | float) * states('input_number.price_electricity_day') | float ) |round(2) }}"
+
+        - name: "um_woutlet_desktop_monthly_cost_night"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_woutlet_desktop_monthly_night') | float) * states('input_number.price_electricity_night') | float ) |round(2) }}"
+
+    # стоимость текущий месяц - сумма
+        - name: "um_woutlet_desktop_monthly_cost_sum"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ (states('sensor.um_woutlet_desktop_monthly_cost_day') | float + states('sensor.um_woutlet_desktop_monthly_cost_night') | float ) |round(2) }}"
+
+    # потребление текущий месяц сумма
+        - name: "um_woutlet_desktop_monthly_sum"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ (states('sensor.um_woutlet_desktop_monthly_day') | float + states('sensor.um_woutlet_desktop_monthly_night') | float) |round(2) }}"
+    
+    # стоимость прошлый месяц - день/ночь
+        - name: "um_woutlet_desktop_monthly_cost_day_lastmonth"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_woutlet_desktop_monthly_day_lastmonth') | float) * states('input_number.price_electricity_day') | float ) |round(2) }}"
+
+        - name: "um_woutlet_desktop_monthly_cost_night_lastmonth"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_woutlet_desktop_monthly_night_lastmonth') | float) * states('input_number.price_electricity_night') | float ) |round(2) }}"
+
+    # стоимость прошлый месяц - сумма
+        - name: "um_woutlet_desktop_monthly_cost_sum_lastmonth"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ (states('sensor.um_woutlet_desktop_monthly_cost_day_lastmonth') | float + states('sensor.um_woutlet_desktop_monthly_cost_night_lastmonth') | float) |round(2) }}"
+
+    # потребление прошлый месяц сумма
+        - name: "um_woutlet_desktop_monthly_sum_lastmonth"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ (states('sensor.um_woutlet_desktop_monthly_day_lastmonth') | float + states('sensor.um_woutlet_desktop_monthly_night_lastmonth') | float) |round(2) }}"
+
+    ###############################################
+    # стоимость текущий - прошлый год по розеткам #
+    ###############################################
+
+    # SPlug serv
+    # стоимость текущий год - день/ночь
+        - name: "um_splug_serv_yearly_cost_day"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_splug_serv_yearly_day') | float) * states('input_number.price_electricity_day') | float ) |round(2) }}"
+
+        - name: "um_splug_serv_yearly_cost_night"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_splug_serv_yearly_night') | float) * states('input_number.price_electricity_night') | float ) |round(2) }}"
+
+    # стоимость текущий год - сумма
+        - name: "um_splug_serv_yearly_cost_sum"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ (states('sensor.um_splug_serv_yearly_cost_day') | float + states('sensor.um_splug_serv_yearly_cost_night') | float ) |round(2) }}"
+
+    # потребление текущий год сумма
+        - name: "um_splug_serv_yearly_sum"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ (states('sensor.um_splug_serv_yearly_day') | float + states('sensor.um_splug_serv_yearly_night') | float) |round(2) }}"
+    
+    # стоимость прошлый год - день/ночь
+        - name: "um_splug_serv_yearly_cost_day_lastyear"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_splug_serv_yearly_day_lastyear') | float) * states('input_number.price_electricity_day') | float ) |round(2) }}"
+
+        - name: "um_splug_serv_yearly_cost_night_lastyear"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_splug_serv_yearly_night_lastyear') | float) * states('input_number.price_electricity_night') | float ) |round(2) }}"
+
+    # стоимость прошлый год - сумма
+        - name: "um_splug_serv_yearly_cost_sum_lastyear"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ (states('sensor.um_splug_serv_yearly_cost_day_lastyear') | float + states('sensor.um_splug_serv_yearly_cost_night_lastyear') | float) |round(2) }}"
+
+    # потребление прошлый год сумма
+        - name: "um_splug_serv_yearly_sum_lastyear"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ (states('sensor.um_splug_serv_yearly_day_lastyear') | float + states('sensor.um_splug_serv_yearly_night_lastyear') | float) |round(2) }}"
+
+    # SPlug TV
+    # стоимость текущий год - день/ночь
+        - name: "um_splug_tv_yearly_cost_day"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_splug_tv_yearly_day') | float) * states('input_number.price_electricity_day') | float ) |round(2) }}"
+
+        - name: "um_splug_tv_yearly_cost_night"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_splug_tv_yearly_night') | float) * states('input_number.price_electricity_night') | float ) |round(2) }}"
+
+    # стоимость текущий год - сумма
+        - name: "um_splug_tv_yearly_cost_sum"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ (states('sensor.um_splug_tv_yearly_cost_day') | float + states('sensor.um_splug_tv_yearly_cost_night') | float ) |round(2) }}"
+
+    # потребление текущий год сумма
+        - name: "um_splug_tv_yearly_sum"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ (states('sensor.um_splug_tv_yearly_day') | float + states('sensor.um_splug_tv_yearly_night') | float) |round(2) }}"
+    
+    # стоимость прошлый год - день/ночь
+        - name: "um_splug_tv_yearly_cost_day_lastyear"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_splug_tv_yearly_day_lastyear') | float) * states('input_number.price_electricity_day') | float ) |round(2) }}"
+
+        - name: "um_splug_tv_yearly_cost_night_lastyear"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_splug_tv_yearly_night_lastyear') | float) * states('input_number.price_electricity_night') | float ) |round(2) }}"
+
+    # стоимость прошлый год - сумма
+        - name: "um_splug_tv_yearly_cost_sum_lastyear"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ (states('sensor.um_splug_tv_yearly_cost_day_lastyear') | float + states('sensor.um_splug_tv_yearly_cost_night_lastyear') | float) |round(2) }}"
+
+    # потребление прошлый год сумма
+        - name: "um_splug_tv_yearly_sum_lastyear"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ (states('sensor.um_splug_tv_yearly_day_lastyear') | float + states('sensor.um_splug_tv_yearly_night_lastyear') | float) |round(2) }}"
+
+    # WOutlet desktop
+    # стоимость текущий год - день/ночь
+        - name: "um_woutlet_desktop_yearly_cost_day"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_woutlet_desktop_yearly_day') | float) * states('input_number.price_electricity_day') | float ) |round(2) }}"
+
+        - name: "um_woutlet_desktop_yearly_cost_night"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_woutlet_desktop_yearly_night') | float) * states('input_number.price_electricity_night') | float ) |round(2) }}"
+
+    # стоимость текущий год - сумма
+        - name: "um_woutlet_desktop_yearly_cost_sum"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ (states('sensor.um_woutlet_desktop_yearly_cost_day') | float + states('sensor.um_woutlet_desktop_yearly_cost_night') | float ) |round(2) }}"
+
+    # потребление текущий год сумма
+        - name: "um_woutlet_desktop_yearly_sum"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ (states('sensor.um_woutlet_desktop_yearly_day') | float + states('sensor.um_woutlet_desktop_yearly_night') | float) |round(2) }}"
+    
+    # стоимость прошлый год - день/ночь
+        - name: "um_woutlet_desktop_yearly_cost_day_lastyear"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_woutlet_desktop_yearly_day_lastyear') | float) * states('input_number.price_electricity_day') | float ) |round(2) }}"
+
+        - name: "um_woutlet_desktop_yearly_cost_night_lastyear"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ ((states('sensor.um_woutlet_desktop_yearly_night_lastyear') | float) * states('input_number.price_electricity_night') | float ) |round(2) }}"
+
+    # стоимость прошлый год - сумма
+        - name: "um_woutlet_desktop_yearly_cost_sum_lastyear"
+          icon: mdi:cash
+          unit_of_measurement: "р."       # единица измерения
+          state: "{{ (states('sensor.um_woutlet_desktop_yearly_cost_day_lastyear') | float + states('sensor.um_woutlet_desktop_yearly_cost_night_lastyear') | float) |round(2) }}"
+
+    # потребление прошлый год сумма
+        - name: "um_woutlet_desktop_yearly_sum_lastyear"
+          icon: mdi:counter
+          unit_of_measurement: "kWh"       # единица измерения
+          device_class: energy
+          state: "{{ (states('sensor.um_woutlet_desktop_yearly_day_lastyear') | float + states('sensor.um_woutlet_desktop_yearly_night_lastyear') | float) |round(2) }}"
+
+        
+####################################################
+#                   АВТОМАТИЗАЦИИ                  #
+####################################################
+                        
+  automation:   
+
+      - id: um_tariff_change
+        alias: um_tariff_change
+        description: Переключение тарифов utility meter подсчета электроэнергии
+        mode: single
+        trigger:
+          - platform: time
+            at: "07:00:00"
+            variables:
+              tariff: "day"
+          - platform: time
+            at: "23:00:00"
+            variables:
+              tariff: "night"
+        action:
+          - service: select.select_option
+            target:
+              entity_id:
+                - select.um_splug_serv_daily
+                - select.um_splug_serv_monthly
+                - select.um_splug_serv_yearly
+                - select.um_splug_tv_daily
+                - select.um_splug_tv_monthly
+                - select.um_splug_tv_yearly
+                - select.um_woutlet_desktop_daily
+                - select.um_woutlet_desktop_monthly
+                - select.um_woutlet_desktop_yearly
+            data:
+              option: "{{ tariff }}"
+  
+       

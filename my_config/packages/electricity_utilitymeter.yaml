@@ -709,4 +709,37 @@ electricityutilitymeter:
             data:
               option: "{{ tariff }}"
   
-       
+        # автоматизация записи прошлых значений в файлы csv 
+      - id: um_2_energy_usage_csv
+        alias: um_2_energy_usage_csv
+        description: Выгрузка в csv файлы статистики по потреблению электроэнергии умными розетками
+        trigger:
+          - platform: time
+            at: '03:02:00'
+        condition: []
+        action:
+          - service: notify.filenotify_um_energy_daily
+            data:
+              message: >-
+                ; {{ (now() - timedelta(days=1)).timestamp() | timestamp_custom("%Y-%m-%d") }}; {{ states('sensor.um_splug_serv_daily_sum_yesterday') }} kWh; {{ states('sensor.um_splug_serv_daily_cost_sum_yesterday') }} р.; {{ states('sensor.um_splug_tv_daily_sum_yesterday') }} kWh; {{ states('sensor.um_splug_tv_daily_cost_sum_yesterday') }} р.; {{ states('sensor.um_woutlet_desktop_daily_sum_yesterday') }} kWh; {{ states('sensor.um_woutlet_desktop_daily_cost_sum_yesterday') }} р.;
+          - if:
+              - condition: template
+                value_template: '{{ now().day == 1 }}'
+            then:
+              - service: notify.filenotify_um_energy_monthly
+                data:
+                  message: >-
+                    ; {{ (now() - timedelta(days=1)).timestamp() | timestamp_custom("%Y-%m") }}; {{ states('sensor.um_splug_serv_monthly_sum_lastmonth') }} kWh; {{ states('sensor.um_splug_serv_monthly_cost_sum_lastmonth') }} р.; {{ states('sensor.um_splug_tv_monthly_sum_lastmonth') }} kWh; {{ states('sensor.um_splug_tv_monthly_cost_sum_lastmonth') }} р.; {{ states('sensor.um_woutlet_desktop_monthly_sum_lastmonth') }} kWh; {{ states('sensor.um_woutlet_desktop_monthly_cost_sum_lastmonth') }} р.; 
+          - if:
+              - condition: and
+                conditions:
+                  - condition: template
+                    value_template: '{{ now().day == 1 }}'
+              - condition: template
+                value_template: '{{ now().month == 1 }}'
+            then:
+              - service: notify.filenotify_um_energy_yearly
+                data:
+                  message: >-
+                    ; {{ (now() - timedelta(days=1)).timestamp() | timestamp_custom("%Y") }}; {{ states('sensor.um_splug_serv_yearly_sum_lastyear') }} kWh; {{ states('sensor.um_splug_serv_yearly_cost_sum_lastyear') }} р.; {{ states('sensor.um_splug_tv_yearly_sum_lastyear') }} kWh; {{ states('sensor.um_splug_tv_yearly_cost_sum_lastyear') }} р.; {{ states('sensor.um_woutlet_desktop_yearly_sum_lastyear') }} kWh; {{ states('sensor.um_woutlet_desktop_yearly_cost_sum_lastyear') }} р.;
+        mode: single      

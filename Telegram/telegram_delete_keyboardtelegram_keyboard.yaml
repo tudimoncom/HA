@@ -1,0 +1,49 @@
+telegramm:
+
+####################################################
+#                   АВТОМАТИЗАЦИИ                  #
+####################################################
+                        
+    automation:   
+    
+                
+# командная клавиатура телеграм бота
+        - id: telegram_keyboard
+          alias: telegram_keyboard
+          description: Клавиатура телеграмм бота
+          initial_state: true
+          trigger:
+          - platform: event
+            event_type: telegram_command
+            event_data:
+              command: '/start'
+          action:
+          #- service: notify.me
+          - service: telegram_bot.send_message
+            data:
+              message: open keyboard
+              keyboard:
+                - '/report, /desktop'
+                - '/datchiki, /bats, /un, /us'
+                - '/light1, /light2, /light3-l, /light3-r'           
+                - '/delkb'              
+                - '/ups, /nas, /restart-ha'              
+                  
+                  
+                    
+# командная клавиатура телеграм бота СКРЫТЬ
+        - id: telegram_delete_keyboard
+          alias: telegram_delete_keyboard
+          description: скрыть клавиатуру телеграмм бота
+          initial_state: true
+          trigger:
+          - platform: event
+            event_type: telegram_command
+            event_data:
+              command: '/delkb'
+          action:
+          - service: telegram_bot.send_message
+            data:
+              message: delete keyboard
+              keyboard: []
+                  

@@ -1,0 +1,138 @@
+type: vertical-stack
+cards:
+  - type: horizontal-stack
+    cards:
+      - type: button
+        tap_action:
+          action: toggle
+        name: TV
+        icon: mdi:television-classic
+        icon_height: 32px
+        entity: switch.0x15***********4_switch
+        show_state: false
+        secondary_info: sensor.plug_15***********4_load
+      - type: button
+        tap_action:
+          action: toggle
+        entity: light.yeelight_color_0x15***********4
+        name: Н
+        show_name: true
+        icon: mdi:floor-lamp
+        icon_height: 32px
+      - type: button
+        tap_action:
+          action: toggle
+        entity: switch.0x55***********4_channel_1
+        icon: mdi:lightbulb-multiple-outline
+        icon_height: 32px
+        show_name: true
+        name: L
+      - type: button
+        tap_action:
+          action: toggle
+        entity: switch.0x55***********4_channel_2
+        icon: mdi:lightbulb-multiple-outline
+        icon_height: 32px
+        show_name: true
+        name: R
+      - type: button
+        tap_action:
+          action: toggle
+        entity: light.yeelight_mono_0x55***********4
+        name: кухня
+        icon_height: 32px
+      - type: button
+        tap_action:
+          action: toggle
+        entity: light.detskaia_smart_rgb_strip
+        name: RGB
+        icon: mdi:led-strip-variant
+        icon_height: 32px
+  - type: custom:apexcharts-card
+    apex_config:
+      chart:
+        height: 200px
+    graph_span: 24h
+    all_series_config:
+      stroke_width: 2
+    header:
+      show: true
+      title: Temperature
+      show_states: true
+      colorize_states: true
+    series:
+      - entity: sensor.0x1***********c_temperature
+        type: line
+        name: спальня
+        group_by:
+          duration: 5min
+      - entity: sensor.0x1************5_temperature
+        type: line
+        name: детская
+        group_by:
+          duration: 5min
+      - entity: sensor.0x1************b_temperature
+        type: line
+        name: кухня
+        group_by:
+          duration: 5min
+      - entity: sensor.0x1************a_temperature
+        type: line
+        name: ванная
+        group_by:
+          duration: 5min
+      - entity: sensor.0x1************a_temperature
+        type: line
+        name: серв
+        group_by:
+          duration: 5min
+      - entity: sensor.0x1************3_temperature
+        type: line
+        name: лоджия
+        group_by:
+          duration: 5min
+  - type: custom:apexcharts-card
+    apex_config:
+      chart:
+        height: 200px
+    graph_span: 24h
+    all_series_config:
+      stroke_width: 2
+    header:
+      show: true
+      title: Humidity
+      show_states: true
+      colorize_states: true
+    series:
+      - entity: sensor.0x1***********c_humidity
+        type: line
+        name: спальня
+        group_by:
+          duration: 5min
+      - entity: sensor.0x1************5_humidity
+        type: line
+        name: детская
+        group_by:
+          duration: 5min
+      - entity: sensor.0x1************b_humidity
+        type: line
+        name: кухня
+        group_by:
+          duration: 5min
+      - entity: sensor.0x1************a_humidity
+        type: line
+        name: ванная
+        group_by:
+          duration: 5min
+      - entity: sensor.0x1************a_humidity
+        type: line
+        name: серв
+        group_by:
+          duration: 5min
+      - entity: sensor.0x1************3_humidity
+        type: line
+        name: лоджия
+        group_by:
+          duration: 5min
+  - type: media-control
+    entity: media_player.televizor_v_spalne_2

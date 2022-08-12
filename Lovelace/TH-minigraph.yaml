@@ -1,0 +1,350 @@
+type: vertical-stack
+cards:
+  - type: horizontal-stack
+    cards:
+      - type: button
+        tap_action:
+          action: toggle
+        name: TV
+        icon: mdi:television-classic
+        icon_height: 32px
+        entity: switch.0x1************4_switch
+        show_state: false
+        secondary_info: sensor.plug_1************4_load
+      - type: button
+        tap_action:
+          action: toggle
+        entity: light.yeelight_color_0x
+        name: Н
+        show_name: true
+        icon: mdi:floor-lamp
+        icon_height: 32px
+      - type: button
+        tap_action:
+          action: toggle
+        entity: switch.0x1************74_channel_1
+        icon: mdi:lightbulb-multiple-outline
+        icon_height: 32px
+        show_name: true
+        name: L
+      - type: button
+        tap_action:
+          action: toggle
+        entity: switch.0x1************74_channel_2
+        icon: mdi:lightbulb-multiple-outline
+        icon_height: 32px
+        show_name: true
+        name: R
+      - type: button
+        tap_action:
+          action: toggle
+        entity: light.yeelight_mono
+        name: кухня
+        icon_height: 32px
+      - type: button
+        tap_action:
+          action: toggle
+        entity: light.detskaia_smart_rgb_strip
+        name: RGB
+        icon: mdi:led-strip-variant
+        icon_height: 32px
+  - type: horizontal-stack
+    cards:
+      - type: custom:mini-graph-card
+        entities:
+          - entity: sensor.0x1************c_temperature
+            name: Температура спальня
+            show_points: false
+            show_state: true
+            tap_action:
+              action: none
+          - entity: sensor.0x1************c_humidity
+            name: Влажность спальня
+            color: '#b5e4ff'
+            show_points: false
+            show_state: true
+            y_axis: secondary
+            tap_action:
+              action: none
+        font_size: 45
+        animate: false
+        color_thresholds:
+          - value: 18
+            color: blue
+          - color: '#ffa319'
+          - value: 25
+            color: '#ff0000'
+        line_width: 3
+        height: 120
+        hour24: true
+        points_per_hour: 2.5
+        align_header: left
+        align_icon: left
+        name: Спальня
+        icon: mdi:bed-king-outline
+        show:
+          name: true
+          icon: true
+          legend: false
+      - type: custom:mini-graph-card
+        entities:
+          - entity: sensor.d1mini_n2_mh_z19_co2_value
+            name: CO2
+            color: var(--accent-color)
+            show_points: false
+            show_state: true
+            tap_action:
+              action: none
+          - entity: sensor.d1mini_n2_ccs811_total_volatile_organic_compound
+            name: TVOC
+            color: '#006400'
+            show_points: false
+            show_state: true
+            y_axis: secondary
+            tap_action:
+              action: none
+        font_size: 45
+        animate: false
+        line_width: 3
+        height: 120
+        hour24: true
+        points_per_hour: 2.5
+        align_header: null
+        align_icon: null
+        name: null
+        icon: null
+        show:
+          name: true
+          icon: true
+          legend: false
+  - type: horizontal-stack
+    cards:
+      - type: custom:mini-graph-card
+        entities:
+          - entity: sensor.0x1************5_temperature
+            name: Температура детская
+            show_points: false
+            show_state: true
+            tap_action:
+              action: none
+          - entity: sensor.0x1************5_humidity
+            name: Влажность детская
+            color: '#b5e4ff'
+            show_points: false
+            show_state: true
+            y_axis: secondary
+            tap_action:
+              action: none
+        font_size: 45
+        animate: false
+        color_thresholds:
+          - value: 18
+            color: blue
+          - color: '#ffa319'
+          - value: 25
+            color: '#ff0000'
+        line_width: 3
+        height: 120
+        hour24: true
+        points_per_hour: 2.5
+        align_header: left
+        align_icon: left
+        name: Детская
+        icon: mdi:baby-carriage
+        show:
+          name: true
+          icon: true
+          legend: false
+      - type: custom:mini-graph-card
+        entities:
+          - entity: sensor.0x1************b_temperature
+            name: Температура кухня
+            show_points: false
+            show_state: true
+            tap_action:
+              action: none
+          - entity: sensor.0x1************b_humidity
+            name: Влажность кухня
+            color: '#b5e4ff'
+            show_points: false
+            show_state: true
+            y_axis: secondary
+            tap_action:
+              action: none
+        font_size: 45
+        animate: false
+        color_thresholds:
+          - value: 18
+            color: blue
+          - color: '#ffa319'
+          - value: 25
+            color: '#ff0000'
+        line_width: 3
+        height: 120
+        hour24: true
+        points_per_hour: 2.5
+        align_header: left
+        align_icon: left
+        name: Кухня
+        icon: mdi:kettle-steam-outline
+        show:
+          name: true
+          icon: true
+          legend: false
+  - type: horizontal-stack
+    cards:
+      - type: custom:mini-graph-card
+        entities:
+          - entity: sensor.0x1************a_temperature
+            name: Температура ванная
+            show_points: false
+            show_state: true
+          - entity: sensor.0x1************a_humidity
+            name: Влажность ванная
+            color: '#b5e4ff'
+            show_points: false
+            show_state: true
+            y_axis: secondary
+            tap_action:
+              action: none
+        font_size: 45
+        animate: false
+        color_thresholds:
+          - value: 18
+            color: blue
+          - color: '#ffa319'
+          - value: 25
+            color: '#ff0000'
+        line_width: 3
+        height: 120
+        hour24: true
+        points_per_hour: 2.5
+        align_header: left
+        align_icon: left
+        name: Ванная
+        icon: mdi:shower
+        show:
+          name: true
+          icon: true
+          legend: false
+      - type: custom:mini-graph-card
+        entities:
+          - entity: sensor.0x1************d_temperature
+            name: Температура серверная
+            show_points: false
+            show_state: true
+            tap_action:
+              action: none
+          - entity: sensor.0x1************d_humidity
+            name: Влажность серверная
+            color: '#b5e4ff'
+            show_points: false
+            show_state: true
+            y_axis: secondary
+            tap_action:
+              action: none
+        font_size: 45
+        animate: false
+        color_thresholds:
+          - value: 18
+            color: blue
+          - color: '#ffa319'
+          - value: 25
+            color: '#ff0000'
+        line_width: 3
+        height: 120
+        hour24: true
+        points_per_hour: 2.5
+        align_header: left
+        align_icon: left
+        name: Серверная
+        icon: mdi:desktop-classic
+        show:
+          name: true
+          icon: true
+          legend: false
+  - type: horizontal-stack
+    cards:
+      - type: custom:mini-graph-card
+        entities:
+          - entity: sensor.0x1************9_temperature
+            name: Температура улица
+            show_points: false
+            show_state: true
+            tap_action:
+              action: none
+          - entity: sensor.0x1************9_humidity
+            name: Влажность улица
+            color: '#b5e4ff'
+            show_points: false
+            show_state: true
+            y_axis: secondary
+            tap_action:
+              action: none
+        font_size: 45
+        animate: false
+        color_thresholds:
+          - value: 10
+            color: blue
+          - color: '#ffa319'
+          - value: 25
+            color: '#ff0000'
+        line_width: 3
+        height: 120
+        hour24: true
+        points_per_hour: 2.5
+        align_header: left
+        align_icon: left
+        name: Улица
+        icon: mdi:gate
+        show:
+          name: true
+          icon: true
+          legend: false
+      - type: custom:mini-graph-card
+        entities:
+          - entity: sensor.0x1************3_temperature
+            name: Температура лоджия
+            show_points: false
+            show_state: true
+            tap_action:
+              action: none
+          - entity: sensor.0x1************3_humidity
+            name: Влажность лоджия
+            color: '#b5e4ff'
+            show_points: false
+            show_state: true
+            y_axis: secondary
+            tap_action:
+              action: none
+          - entity: sensor.t_h_p_lodzhiia_p_mmhg
+            name: Давление лоджия
+            color: black
+            show_points: false
+            show_graph: false
+            show_state: true
+            y_axis: secondary
+            tap_action:
+              action: none
+        font_size: 45
+        animate: false
+        color_thresholds:
+          - value: 15
+            color: blue
+          - color: '#ffa319'
+          - value: 25
+            color: '#ff0000'
+        line_width: 3
+        height: 120
+        hour24: true
+        points_per_hour: 2.5
+        align_header: left
+        align_icon: left
+        name: Лоджия
+        icon: mdi:window-open-variant
+        show:
+          name: true
+          icon: true
+          legend: false
+  - type: media-control
+    entity: media_player.televizor_v_spalne_2

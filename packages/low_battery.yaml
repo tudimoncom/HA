@@ -1,0 +1,70 @@
+# пакет отслеживания низкого уровня батареек
+lowbattery:
+
+####################################################
+#                       СЕНСОРЫ                    #
+####################################################
+
+    sensor:
+
+      - platform: template
+        sensors:
+
+          low_battery:
+            friendly_name: "Сенсоры с низким зарядом батареи"
+            value_template: >
+              {%- set domains = ['sensor', 'zwave'] -%}
+              {%- set threshold = 40 -%}
+              {%- set exclude_entities = ['sensor.sensors_lowest_battery_level','sensor.wife_phone_batt','sensor.jseidl_phone_batt'] -%}
+              {%- for domain in domains -%}
+                {%- for item in states[domain] -%}
+                  {%- if item.entity_id not in exclude_entities -%}
+                    {%- if item.attributes.battery_level is defined -%}
+                      {%- set level = item.attributes.battery_level|int -%}
+                      {% if level > 0 and level < threshold %}
+              - {{ item.attributes.friendly_name }} ({{ item.attributes['battery_level']|int}}%)
+                      {%- endif -%}
+                    {%- endif -%}
+                    {%- if item.attributes.device_class is defined and item.attributes.device_class == 'battery' -%}
+                      {%- set level = item.state|int -%}
+                      {% if level > 0 and level <= threshold %}
+              - {{ item.attributes.friendly_name }} ({{ item.state|int }}%)
+                      {%- endif -%}
+                    {%- endif %}
+                  {%- endif -%}
+                {%- endfor -%}
+              {%- endfor -%}
+        # domains - домены которые отслеживаем
+        # threshold - значение уровня ниже которого отслеживаем
+        # exclude_entities - список исключаемых сенсоров
+            #icon_template: mdi:counter  
+
+
+####################################################
+#                   АВТОМАТИЗАЦИИ                  #
+####################################################
+                        
+    automation:   
+    
+        - id: low_battery_warning
+          alias: low_battery_warning
+          description: Уведомление о низком заряде батареи
+          initial_state: true
+          trigger:   
+             - platform: time
+               at: "23:22:00"
+          condition:
+            - condition: not
+              conditions:
+                - condition: state
+                  entity_id: sensor.low_battery
+                  state: ""
+          action:          
+             - service: notify.me_group
+               data:
+                 message: | 
+                     {{"\U0001F50B"}} {{ states('sensor.time_date') }} Низкий уровень батареек:
+                     ----------- ================= ----------- 
+                     {{ states('sensor.low_battery') }} 
+
+          mode: single

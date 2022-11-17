@@ -15,7 +15,7 @@ lowbattery:
             value_template: >
               {%- set domains = ['sensor', 'zwave'] -%}
               {%- set threshold = 40 -%}
-              {%- set exclude_entities = ['sensor.sensors_lowest_battery_level','sensor.wife_phone_batt','sensor.jseidl_phone_batt'] -%}
+              {%- set exclude_entities = ['sensor.sensors_lowest_battery_level','sensor.wife_phone_batt','sensor.dima_phone_batt'] -%}
               {%- for domain in domains -%}
                 {%- for item in states[domain] -%}
                   {%- if item.entity_id not in exclude_entities -%}

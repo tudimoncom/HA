@@ -1,0 +1,578 @@
+# пакет сигнализации
+alarmcontrol:
+
+####################################################
+#                    СУЩНОСТИ                      #
+####################################################
+
+    binary_sensor:
+  
+    timer:
+      alarm_sirena_timer:               # таймер включения сирены если сигнализация не отключена
+        duration: "00:01:00"
+      alarm_sirena_timer_off:           # таймер отключения сирены если сигнализация ВСЕ ЕЩЕ не отключена
+        duration: "00:10:00"
+
+####################################################
+#                     ПАНЕЛЬ                       #
+####################################################
+    alarm_control_panel:                #
+      - platform: manual                #
+        name: Home Alarm                # имя панели
+        code: "77877"                   # код для включения или отключения
+        code_arm_required: false        # требуется ли код для постановки на охрану
+        arming_time: 60                 # Время в секундах состояния «подготовки» перед изменением состояния.
+        delay_time: 50                  #
+        trigger_time: 20                # Время в секундах «сработавшего» состояния, в котором срабатывает тревога.
+        disarmed:
+          trigger_time: 0               #
+        armed_home:
+          arming_time: 0                #
+          delay_time: 0                 #
+          
+####################################################
+#           ВСПОМОГАТЕЛЬНЫЕ ЭЛЕМЕНТЫ               #
+####################################################
+    input_boolean:
+      cam2record_enabled:
+        name: "Cam2 запись вкл"         # имя
+        #initial: off                   # начальное значение
+        icon: mdi:cctv-off              # иконка
+
+      cam3record_enabled:
+        name: "Cam3 запись вкл"         # имя
+        #initial: off                   # начальное значение
+        icon: mdi:cctv-off              # иконка
+          
+####################################################
+#                      СКРИПТЫ                     #
+####################################################
+
+    script:
+    
+# перетащить потом сюда все действия с розетками
+    
+    # скрипт включения режима охраны "home away"
+      alarm_on_home_away:
+        alias: alarm_on_home_away
+        sequence:
+          - service: notify.me_group
+            data:
+              title: Security alarm system HA
+              message: |
+                {{"\U0001F6A7"}} Включение охраны в {{ now().strftime('%Y-%m-%d %H:%M:%S %Z') }}
+          # взведение сигнализации
+          - service: alarm_control_panel.alarm_arm_away
+            data: {}
+            target:
+              entity_id: alarm_control_panel.home_alarm
+          # проиграть мелодию на шлюзе
+          - service: xiaomi_aqara.play_ringtone
+            data:
+              gw_mac: gw_mac
+              ringtone_id: '10002'
+              ringtone_vol: 30
+          # выключить экран датчика качества воздуха в спальне
+          - service: button.press
+            target:
+              entity_id: button.d1mini_n2_blank_screen
+            data: {}
+        mode: single
+
+    # скрипт выключения режима охраны
+      alarm_off:
+        alias: alarm_off
+        sequence:
+          - service: notify.me_group
+            data:
+              title: Security alarm system HA
+              message: |
+                {{"\U0001F6A7"}} Выключение охраны в {{ now().strftime('%Y-%m-%d %H:%M:%S %Z') }}
+          # выключение режима охраны
+          - service: alarm_control_panel.alarm_disarm
+            data:
+              entity_id: alarm_control_panel.home_alarm
+              code: 77877
+          # проиграть мелодию на шлюзе
+          - service: xiaomi_aqara.play_ringtone
+            data:
+              gw_mac: gw_mac
+              ringtone_id: '10003'
+              ringtone_vol: 30
+          # выключение инпут булеонов "отсылать ролики с камер"
+          - service: input_boolean.turn_off
+            data: {}
+            target:
+              entity_id:
+               # - input_boolean.cam2record_enabled
+                - input_boolean.cam3record_enabled
+          # включение подсветки прихожей
+          - service: timer.start
+            data:
+              duration: "00:03:00"
+            target:
+              entity_id: timer.halllight_night_timer
+          # включить экран датчика качества воздуха в спальне
+          - service: button.press
+            target:
+              entity_id: button.d1mini_n2_next_screen
+            data: {}
+        mode: single            
+          
+####################################################
+#                   АВТОМАТИЗАЦИИ                  #
+####################################################
+
+    automation:
+
+    ## всякие уведомления. ТЕСТ режим
+    
+      # автоматизация при отключении сигнализации
+      - id: alarm_disarmed
+        alias: alarm_disarmed
+        description: Send notification when alarm is Disarmed
+        trigger:
+          - platform: state
+            entity_id: alarm_control_panel.home_alarm
+            to: "disarmed"
+        action:
+          - service: notify.me_group
+            data:
+              message: "ALARM! The alarm is Disarmed at {{ now().strftime('%Y-%m-%d %H:%M:%S %Z') }}"
+          - service: timer.cancel
+            target:
+              entity_id:
+                - timer.alarm_sirena_timer
+                - timer.alarm_sirena_timer_off
+          - service: light.turn_off
+            data: {}
+            target:
+              entity_id:
+                - light.yeelight1
+                - light.yeelight2
+            # сменим страничку на wallpanel и включим экран
+          - service: fullykiosk.load_url
+            data:
+              entity_id: media_player.samsung_galaxy_tab_3_media_player
+              url: http://../lovelace-wallpanel/rooms
+          - service: timer.start
+            data:
+              duration: "00:03:00"
+            target:
+              entity_id: timer.wallpanel_dd_timer
+          - type: turn_on
+            device_id: 2ed903d
+            entity_id: light.samsung_galaxy_tab_3_screen
+            domain: light
+          - service: switch.turn_on
+            data: {}
+            target:
+              entity_id:
+                - switch.0x14_switch    # тв
+                - switch.0x15_switch    # WallOutlet Artur Comp 
+                - switch.0x17_switch    # SPlug Term
+                - switch.sonoff_1       # TH16-1
+                - switch.sonoff_2       # TH16-2
+          - service: timer.start
+            data:
+              duration: "00:03:00"
+            target:
+              entity_id: timer.halllight_timer
+      
+      # автоматизация что делать когда сработали датчики сигнализации
+      - id: alarm_pending
+        alias: alarm_pending
+        description: Send notification when alarm is in pending status
+        trigger:
+          - platform: state
+            entity_id: alarm_control_panel.home_alarm
+            to: "pending"
+        action:
+          - service: notify.me_group
+            data:
+              message: "ALARM! The alarm is in pending status at {{ now().strftime('%Y-%m-%d %H:%M:%S %Z') }}"
+
+      # автоматизация что делать когда сигнализация взвелась
+      - id: alarm_away_mode
+        alias: alarm_away_mode
+        description: Send notification when alarm is Armed in Away mode
+        trigger:
+          - platform: state
+            entity_id: alarm_control_panel.home_alarm
+            to: "armed_away"
+        action:
+          - service: notify.me_group
+            data:
+              message: "ALARM! The alarm is armed in Away mode {{ now().strftime('%Y-%m-%d %H:%M:%S %Z') }}"
+            # сменим страничку на wallpanel и не включим экран
+          - if:
+              - condition: and
+                conditions:
+                  - condition: state
+                    entity_id: timer.alarm_sirena_timer
+                    state: idle
+              - condition: state
+                entity_id: timer.alarm_sirena_timer_off
+                state: idle
+            then:
+              - service: fullykiosk.load_url
+                data:
+                  entity_id: media_player.samsung_galaxy_tab_3_media_player
+                  url: http://../lovelace-wallpanel/alarm
+          - service: switch.turn_off
+            data: {}
+            target:
+              entity_id:
+                - switch.0x14_switch    # тв
+                - switch.0x15_switch    # WallOutlet Artur Comp 
+                - switch.0x17_switch    # SPlug Term
+                - switch.sonoff_1       # TH16-1
+                - switch.sonoff_2       # TH16-2
+
+      # автоматизация когда сигнализация взвелась в режиме "мы дома"
+      - id: alarm_home_mode
+        alias: alarm_home_mode
+        description: Send notification when alarm is Armed in Home mode
+        trigger:
+          - platform: state
+            entity_id: alarm_control_panel.home_alarm
+            to: "armed_home"
+        action:
+          - service: notify.me_group
+            data:
+              # Using multi-line notation allows for easier quoting
+              message: >
+                ALARM! The alarm is armed in Home mode {{ now().strftime('%Y-%m-%d %H:%M:%S %Z') }}
+            # сменим страничку на wallpanel и не включим экран
+          - if:
+              - condition: and
+                conditions:
+                  - condition: state
+                    entity_id: timer.alarm_sirena_timer
+                    state: idle
+              - condition: state
+                entity_id: timer.alarm_sirena_timer_off
+                state: idle
+            then:
+              - service: fullykiosk.load_url
+                data:
+                  entity_id: media_player.samsung_galaxy_tab_3_media_player
+                  url: http://../lovelace-wallpanel/alarm
+          - service: switch.turn_off
+            data: {}
+            target:
+              entity_id:
+                - switch.0x14_switch
+                - switch.0x15_switch
+
+                
+      # автоматизация снятия/постановки на охрану кнопкой aqara в прихожей          
+      - id: alarm_aqara_button_prihozaya
+        alias: alarm_aqara_button_prihozaya
+        description: Постановка/снятие с охраны кнопкой в прихожей
+        trigger:
+          - platform: event
+            event_type: xiaomi_aqara.click
+            event_data:
+              entity_id: binary_sensor.switch_17
+              click_type: single
+            id: aqara_prihozaya_single
+          - platform: event
+            event_data:
+              entity_id: binary_sensor.switch_17
+              click_type: double
+            event_type: xiaomi_aqara.click
+            id: aqara_prihozaya_double
+        condition: []
+        action:
+          - choose:
+                
+                # to arm away
+              - conditions:
+                  - condition: trigger
+                    id: aqara_prihozaya_single
+                sequence:
+                  - service: script.alarm_on_home_away
+                    data: {}
+                  - service: xiaomi_aqara.play_ringtone
+                    data:
+                      gw_mac: gw_mac
+                      ringtone_id: '10002'
+                      ringtone_vol: 30
+                  - service: input_boolean.turn_on
+                    data: {}
+                    target:
+                      entity_id:
+                       # - input_boolean.cam2record_enabled
+                        - input_boolean.cam3record_enabled
+
+                # to disarm     
+              - conditions:
+                  - condition: trigger
+                    id: aqara_prihozaya_double
+                sequence:
+                  - service: script.alarm_off
+                    data: {}
+                  - service: light.turn_off
+                    data: {}
+                    target:
+                      entity_id: light.xiaomi_gateway_light
+
+
+            default: []
+        mode: single
+        
+        # автоматизация сработки триггера - взвести сигнализацию в режим pending
+      - id: alarm_trigger_motion_contact
+        alias: alarm_trigger_motion_contact
+        description: Сработали триггеры - взвести сигнализацию в pending
+        trigger:
+            # движение
+          - platform: state
+            entity_id: 
+              - binary_sensor.motion_sensor_1c # прихожая
+              - binary_sensor.motion_sensor_13 # кухня
+
+            to: 'on'
+            for:
+              hours: 0
+              minutes: 0
+              seconds: 2
+            id: alarm_motion_sensors
+            # двери/окна
+          - platform: state
+            entity_id: 
+              - binary_sensor.door_window_sensor_1b # дверь
+              - binary_sensor.door_window_sensor_1a # Замок нижний
+
+            to: 'on'
+            for:
+              hours: 0
+              minutes: 0
+              seconds: 2
+            id: alarm_contact_sensors
+            
+        condition: 
+          condition: or
+          conditions:
+          - condition: state
+            entity_id: alarm_control_panel.home_alarm
+            state: armed_home
+          - condition: state
+            entity_id: alarm_control_panel.home_alarm
+            state: armed_away
+        action:
+          - choose:
+                
+                # motion trigger
+              - conditions:
+                  - condition: trigger
+                    id: alarm_motion_sensors
+                sequence:
+                  - service: notify.me_group
+                    data:
+                      title: Security alarm system HA
+                      message: |
+                        {{"\U0001F6A7"}} {{ now().strftime('%Y-%m-%d %H:%M:%S %Z') }} Движение!
+                        
+                        {{"\U0001F3C3"}} Датчики движения
+                        Прихожая - {{ states('binary_sensor.motion_sensor_1c') }}.   {{ states.binary_sensor.motion_sensor_1c.last_changed.timestamp() | timestamp_custom('%A %d %h %H:%M') }}
+                        Кухня - {{ states('binary_sensor.motion_sensor_13') }}.   {{ states.binary_sensor.motion_sensor_13.last_changed.timestamp() | timestamp_custom('%A %d %h %H:%M') }}
+                         
+                        Состояние Alarm system - {{ states('alarm_control_panel.home_alarm') }}
+
+                  - service: alarm_control_panel.alarm_trigger
+                    data:
+                      entity_id: alarm_control_panel.home_alarm
+                #   - service: script.alarm_light_on
+                #     data: {}
+                  - if:
+                      - condition: and
+                        conditions:
+                          - condition: state
+                            entity_id: timer.alarm_sirena_timer
+                            state: idle
+                      - condition: state
+                        entity_id: timer.alarm_sirena_timer_off
+                        state: idle
+                    then:
+                    #   - delay:
+                    #       hours: 0
+                    #       minutes: 0
+                    #       seconds: 10
+                    #       milliseconds: 0
+                      - service: light.turn_on
+                        data:
+                          brightness: 205
+                          flash: long
+                          rgb_color:
+                            - 255
+                            - 0
+                            - 0
+                        target:
+                          entity_id: light.xiaomi_gateway_light
+                      - service: timer.start
+                        target:
+                          entity_id:
+                            - timer.alarm_sirena_timer
+                            - timer.alarm_sirena_timer_off
+                      - service: timer.start
+                        data:
+                          duration: "00:03:00"
+                        target:
+                          entity_id: timer.wallpanel_dd_timer
+                      - service: script.alarm_light_on
+                        data: {}
+                      - type: turn_on
+                        device_id: b3d
+                        entity_id: light.samsung_galaxy_tab_3_screen
+                        domain: light
+                      
+                # contact trigger     
+              - conditions:
+                  - condition: trigger
+                    id: alarm_contact_sensors
+                sequence:
+                  - service: notify.me_group
+                    data:
+                      title: Security alarm system HA
+                      message: |
+                        {{"\U0001F6A7"}} {{ now().strftime('%Y-%m-%d %H:%M:%S %Z') }} Двери или окна!
+                        
+                        {{"\U0001F6AA"}} Датчики дверей/окон
+                        Дверь - {% if is_state("binary_sensor.door_window_sensor_1b", "off") -%}
+                        закрыта. 
+                        {%- else -%}
+                        открыта. 
+                        {%- endif %}  {{ states.binary_sensor.door_window_sensor_1b.last_updated.timestamp() | timestamp_custom('%A %d %h %H:%M') }}
+                         
+                        Состояние Alarm system - {{ states('alarm_control_panel.home_alarm') }}
+
+                  - service: alarm_control_panel.alarm_trigger
+                    data:
+                      entity_id: alarm_control_panel.home_alarm
+
+                  - if:
+                      - condition: and
+                        conditions:
+                          - condition: state
+                            entity_id: timer.alarm_sirena_timer
+                            state: idle
+                      - condition: state
+                        entity_id: timer.alarm_sirena_timer_off
+                        state: idle
+                    then:
+                      - delay:
+                          hours: 0
+                          minutes: 0
+                          seconds: 10
+                          milliseconds: 0
+                      - service: light.turn_on
+                        data:
+                          brightness: 205
+                          flash: long
+                          rgb_color:
+                            - 255
+                            - 0
+                            - 0
+                        target:
+                          entity_id: light.xiaomi_gateway_light
+                      - service: timer.start
+                        target:
+                          entity_id:
+                            - timer.alarm_sirena_timer
+                            - timer.alarm_sirena_timer_off
+                      - service: timer.start
+                        data:
+                          duration: "00:03:00"
+                        target:
+                          entity_id: timer.wallpanel_dd_timer
+                      - service: script.alarm_light_on
+                        data: {}
+                      - type: turn_on
+                        device_id: bd
+                        entity_id: light.samsung_galaxy_tab_3_screen
+                        domain: light
+
+            default: []
+
+        mode: single
+
+
+        # автоматизация сигнализация не отключена за время pending - ТРЕВОГА
+      - id: alarm_sirena_after_trigger
+        alias: alarm_sirena_after_trigger
+        description: автоматизация сигнализация не отключена за время pending - ТРЕВОГА
+        trigger:
+            # отработка таймера включения сирены
+          - platform: event
+            event_type: timer.finished
+            event_data:
+              entity_id: timer.alarm_sirena_timer
+            id: alarm_sirena_timer_finished
+            # отработка таймера выключения сирены
+          - platform: event
+            event_type: timer.finished
+            event_data:
+              entity_id: timer.alarm_sirena_timer_off
+            id: alarm_sirena_timer_off_finished
+            
+        condition: []
+        action:
+          - choose:
+                
+                # включаем сирену
+              - conditions:
+                  - condition: trigger
+                    id: alarm_sirena_timer_finished
+                sequence:
+                  - service: notify.me_group
+                    data:
+                      title: Security alarm system HA
+                      message: |
+                        {{"\U0001F6A7"}} {{ now().strftime('%Y-%m-%d %H:%M:%S %Z') }} 
+                        Прошла минута сигнализация не выключена..
+                        
+                        Включаю сирену!
+                        
+                        Состояние Alarm system - {{ states('alarm_control_panel.home_alarm') }}
+                
+                  - service: xiaomi_aqara.play_ringtone
+                    data:
+                      gw_mac: gw_mac
+                      ringtone_id: '0'
+                      ringtone_vol: 100
+
+                # выключаем сирену если за 10 минут сигнализация не отключена и сирена все еще воет
+              - conditions:
+                  - condition: trigger
+                    id: alarm_sirena_timer_off_finished
+                sequence:
+                  - service: notify.me_group
+                    data:
+                      title: Security alarm system HA
+                      message: |
+                        {{"\U0001F6A7"}} {{ now().strftime('%Y-%m-%d %H:%M:%S %Z') }} 
+                        Прошлао 10 минут сигнализация ВСЕ ЕЩЕ не выключена..
+                        
+                        Отключаю сирену сирену! Бедные соседи!
+                        
+                        Состояние Alarm system - {{ states('alarm_control_panel.home_alarm') }}
+
+                  - service: light.turn_off
+                    data: {}
+                    target:
+                      entity_id:
+                        - light.yeelight_1
+                        - light.yeelight_2
+                        - light.xiaomi_gateway_light
+                  - service: timer.cancel
+                    target:
+                      entity_id:
+                        - timer.alarm_sirena_timer
+                        - timer.alarm_sirena_timer_off
+
+            default: []
+        mode: single
+
+        

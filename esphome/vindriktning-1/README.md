@@ -6,4 +6,4 @@ ikea vindriktning в ESPHome
 ![Первый вариант дашборда на TFT экране](/esphome/vindriktning-1/img/screen1.jpg)
 
 # Схема коммутации датчиков и ESP32s3
-![Схема коммутации ESP, экрана и датчиков](/vindriktning-1/img/circuit_image1.png)
+![Схема коммутации ESP, экрана и датчиков](/esphome/vindriktning-1/img/circuit_image1.png)

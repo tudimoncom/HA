@@ -1,0 +1,551 @@
+# -----------------------------------------------------------------------------
+# ESP32s3 surepmini + ikea vindriktning + CCS811 + scd40 + 1.8" TFT
+#
+# DATE: 2025-09-09
+# 
+# ikea vindriktning use on pins:
+#  rx_pin: GPIO44
+#
+#  CCS811 use i2c
+#  SCD40 use i2c
+#  on pins:
+#   sda:  GPIO6
+#   scl:  GPIO7
+#[19:49:59][I][i2c.arduino:106]: Found device at address 0x5A	- ccs811
+#[19:49:59][I][i2c.arduino:106]: Found device at address 0x62	- scd40
+#   VCC:  3.3V
+#
+# Фильтрация значений - при uptime_sensor < 600s не передавать значения сенсоров
+#
+# Display
+#   LED:    GPIO8
+#   SCK:    GPIO13
+#   SDA:    GPIO12
+#   AO:     GPIO9
+#   RESET:  GPIO11
+#   SC:     GPIO10
+#   VCC:    3.3V
+#
+# ESP		    	IKEA	CSS811		SCD40	  TFT
+# ----------------------------------------------
+# GPIO6				        SDA			  SDA
+# GPIO7			        	SDL			  SDL
+# GPIO8								              	LED
+# GPIO9								              	A0
+# GPIO10								            	CS
+# GPIO11									            RESET
+# GPIO12								            	DSA
+# GPIO13									            SCK
+# GPIO44 (RX)	REST	
+# 3.3V				VCC			VCC		    VCC
+# GND			    GND		  GND, WAK	GND		GND
+# 5V			    5V				
+# -----------------------------------------------------------------------------
+
+
+esphome:
+  name: vindriktning-1
+  friendly_name: vindriktning-1
+  comment: "IKEA vindriktning-1"
+  project:
+    name: "d.vindriktning-1"
+    version: 1.0.8
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: arduino
+
+# Example debug configuration entry
+debug:
+  update_interval: 5s
+  
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: !secret api_key_vindriktning-1
+  reboot_timeout: 30min # время ожидания API перед перезагрузкой 
+
+ota:
+  - platform: esphome
+    password: !secret ota_password_vindriktning-1
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  reboot_timeout: 30min # время ожидания перед перезагрузкой при отсутствии Wi-Fi-соединения
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: !secret hotspot_wifi_ssid_vindriktning-1
+    password: !secret hotspot_wifi_password_vindriktning-1 
+
+mdns:
+  disabled: false
+
+# Captive portal резервный механизм для настройки, если подключение к сконфигурированной WiFi сети не удалось
+captive_portal:
+
+# включим Web server
+web_server:
+  port: 80
+#  auth:
+#    username: admin
+#    password: !secret web_server_password
+
+# Get the time from Home Assistant to sync the onboard real-time clock.
+time:
+  - platform: homeassistant
+    id: esptime
+
+# сенсор Солнца
+sun:
+  latitude: 59°
+  longitude: 30°
+
+
+# СИСТЕМНЫЕ ШИНЫ
+
+
+
+# настроим UART
+uart:
+  rx_pin: GPIO44 #RX 
+  baud_rate: 9600
+  debug:
+    direction: RX
+    dummy_receiver: true
+    after:
+      delimiter: "\r\n"
+    sequence:
+      - lambda: |-
+          UARTDebug::log_string(direction, bytes);  //Still log the data
+          uint8_t checksum = 0;
+          for (int i=0; i < bytes.size(); i++) {
+            checksum+= bytes[i];
+          }
+          if (checksum==0){
+            ESP_LOGD("UART","PM1006|PM1006k checksum validated, have %d", checksum);
+            if (bytes.size()==20 and (bytes[0]==22 and bytes[1]==17 and bytes[2]==11)) {
+              ESP_LOGD("UART", "Correct PM1006 response recieved. Updating sensors");
+              id(pm2).publish_state(bytes[5]*256+bytes[6]); 
+              id(pm1).publish_state(bytes[9]*256+bytes[10]);
+              id(pm10).publish_state(bytes[13]*256+bytes[14]);
+            }
+            if (bytes.size()==16 and (bytes[0]==22 and bytes[1]==13 and bytes[2]==2)) {
+              ESP_LOGD("UART", "Correct PM1006K response recieved. Updating sensors");
+              id(pm2).publish_state(bytes[5]*256+bytes[6]); 
+              id(pm1).publish_state(bytes[9]*256+bytes[10]);
+              id(pm10).publish_state(bytes[13]*256+bytes[14]);
+            }
+          }
+          else{
+            ESP_LOGW("UART","PM1006|PM1006k checksum is wrong: %02x, expected zero. Sensors will not be updated", checksum);
+          }
+
+# настроим i2c
+i2c:
+  sda: GPIO6
+  scl: GPIO7
+  scan: true # If ESPHome should do a search of the I2C address space on startup. Defaults to true.
+#  frequency: 400kHz
+
+spi:
+  clk_pin: GPIO13
+  mosi_pin: GPIO12
+
+# ШРИФТЫ
+font:
+
+  - file: "fonts/Roboto-Thin.ttf"
+    id: font0
+    size: 15
+    glyphs: |-
+      !"%()+=,-_.:°0123456789АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧЩЬЫЪЭЮЯABCDEFGHIJKLMNOPQRSTUVWXYZ абвгдеёжзийклмнопрстуфхцчщьыъэюяabcdefghijklmnopqrstuvwxyz'éèàòùç/&ôœìïöñ
+    # gfonts://family[@weight]
+  - file: "fonts/Roboto-Thin.ttf"
+    id: font1
+    size: 12
+    glyphs: |-
+      !"%()+=,-_.:°0123456789АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧЩЬЫЪЭЮЯABCDEFGHIJKLMNOPQRSTUVWXYZ абвгдеёжзийклмнопрстуфхцчщьыъэюяabcdefghijklmnopqrstuvwxyz'éèàòùç/&ôœìïöñ
+    # gfonts://family[@weight]
+  - file: "gfonts://Roboto"
+    id: font3
+    size: 15 
+  - file: 'fonts/GothamRnd-Bold.ttf'
+    id: font_large_bold
+    size: 22
+    glyphs: [' ', '-', '.', ',',  '°', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'C',]
+
+  # Include Material Design Icons font
+  # Thanks to https://community.home-assistant.io/t/display-materialdesign-icons-on-esphome-attached-to-screen/199790/16
+  - file: 'fonts/materialdesignicons-webfont.ttf'
+    id: font_mdi_large
+    size: 32
+    glyphs: #&mdi-weather-glyphs
+      - "\U000F0590" # mdi-weather-cloudy
+      - "\U000F0F2F" # mdi-weather-cloudy-alert
+      - "\U000F0E6E" # mdi-weather-cloudy-arrow-right
+      - "\U000F0591" # mdi-weather-fog
+      - "\U000F0592" # mdi-weather-hail
+      - "\U000F0F30" # mdi-weather-hazy
+      - "\U000F0898" # mdi-weather-hurricane
+      - "\U000F0593" # mdi-weather-lightning
+      - "\U000F067E" # mdi-weather-lightning-rainy
+      - "\U000F0594" # mdi-weather-night
+      - "\U000F0F31" # mdi-weather-night-partly-cloudy
+      - "\U000F0595" # mdi-weather-partly-cloudy
+      - "\U000F0F32" # mdi-weather-partly-lightning
+      - "\U000F0F33" # mdi-weather-partly-rainy
+      - "\U000F0F34" # mdi-weather-partly-snowy
+      - "\U000F0F35" # mdi-weather-partly-snowy-rainy
+      - "\U000F0596" # mdi-weather-pouring
+      - "\U000F0597" # mdi-weather-rainy
+      - "\U000F0598" # mdi-weather-snowy
+      - "\U000F0F36" # mdi-weather-snowy-heavy
+      - "\U000F067F" # mdi-weather-snowy-rainy
+      - "\U000F0599" # mdi-weather-sunny
+      - "\U000F0F37" # mdi-weather-sunny-alert
+      - "\U000F059A" # mdi-weather-sunset
+      - "\U000F059B" # mdi-weather-sunset-down
+      - "\U000F059C" # mdi-weather-sunset-up
+      - "\U000F0F38" # mdi-weather-tornado
+      - "\U000F059D" # mdi-weather-windy
+      - "\U000F059E" # mdi-weather-windy-variant
+
+# ДИСПЛЕЙ 
+display:
+  - platform: st7735
+    model: "INITR_18BLACKTAB"
+    reset_pin: GPIO11
+    cs_pin: GPIO10
+    dc_pin: GPIO9
+    rotation: 0
+    device_width: 128
+    device_height: 160
+    col_start: 0
+    row_start: 0
+    eight_bit_color: true
+    update_interval: 5s
+    id: my_display
+    pages:
+      - id: page1
+        lambda: |-
+          // Map weather states to MDI characters.
+          std::map<std::string, std::string> weather_icon_map
+            {
+              {"cloudy", "\U000F0590"},
+              {"cloudy-alert", "\U000F0F2F"},
+              {"cloudy-arrow-right", "\U000F0E6E"},
+              {"fog", "\U000F0591"},
+              {"hail", "\U000F0592"},
+              {"hazy", "\U000F0F30"},
+              {"hurricane", "\U000F0898"},
+              {"lightning", "\U000F0593"},
+              {"lightning-rainy", "\U000F067E"},
+              {"night", "\U000F0594"},
+              {"clear-night", "\U000F0594"},
+              {"night-partly-cloudy", "\U000F0F31"},
+              {"partlycloudy", "\U000F0595"},
+              {"partly-lightning", "\U000F0F32"},
+              {"partly-rainy", "\U000F0F33"},
+              {"partly-snowy", "\U000F0F34"},
+              {"partly-snowy-rainy", "\U000F0F35"},
+              {"pouring", "\U000F0596"},
+              {"rainy", "\U000F0597"},
+              {"snowy", "\U000F0598"},
+              {"snowy-heavy", "\U000F0F36"},
+              {"snowy-rainy", "\U000F067F"},
+              {"sunny", "\U000F0599"},
+              {"sunny-alert", "\U000F0F37"},
+              {"sunset", "\U000F059A"},
+              {"sunset-down", "\U000F059B"},
+              {"sunset-up", "\U000F059C"},
+              {"tornado", "\U000F0F38"},
+              {"windy", "\U000F059D"},
+              {"windy-variant", "\U000F059E"},
+            };
+
+          // Теперь все выводим на экран
+          it.strftime(it.get_width() / 2, 8, id(font3), my_white, TextAlign::CENTER, "%H:%M  %Y-%m-%d", id(esptime).now());
+
+          it.line(5, 16, 123, 16);
+
+          // Иконка погоды 
+          it.printf(5, 18, id(font_mdi_large), my_white, TextAlign::TOP_LEFT, "%s", weather_icon_map[id(weather_state_now).state.c_str()].c_str());
+          // it.printf(64, 135, id(font0), TextAlign::BASELINE_CENTER, "%s", id(weather_state_now).state.c_str()); 
+
+          // Print Температура на улице
+          it.printf(123, 18, id(font_large_bold), TextAlign::TOP_RIGHT, "%.1f°", id(ulitsa_t_min).state); 
+
+          it.printf(45, 45, id(font1), TextAlign::TOP_LEFT, "%s", id(sun_sunrise).state.c_str()); 
+          it.printf(125, 45, id(font1), TextAlign::TOP_RIGHT, "%s", id(sun_sunset).state.c_str());
+
+          it.line(5, 60, 123, 60);
+
+          it.print(64, 70, id(font0), my_white, TextAlign::CENTER,  "PM мкг/m3");
+          
+          it.printf(7, 78, id(font1), my_white, TextAlign::TOP_LEFT, "1.0");
+          it.printf(64, 78, id(font1), my_white, TextAlign::TOP_CENTER, "2.5");
+          it.printf(118, 78, id(font1), my_white, TextAlign::TOP_RIGHT, "10");
+          
+          uint16_t vpm1 = (id(pm1).state);
+            switch (vpm1) {
+              case 0 ... 30: it.printf(5, 94, id(font0), green, TextAlign::TOP_LEFT, "%.0f ", id(pm1).state); break;
+              case 31 ... 60: it.printf(5, 94, id(font0), lgreen, TextAlign::TOP_LEFT, "%.0f ", id(pm1).state); break;
+              case 61 ... 90: it.printf(5, 94, id(font0), yellow, TextAlign::TOP_LEFT, "%.0f ", id(pm1).state); break;
+              case 91 ... 120: it.printf(5, 94, id(font0), lyellow, TextAlign::TOP_LEFT, "%.0f ", id(pm1).state); break;
+              case 121 ... 250: it.printf(5, 94, id(font0), red, TextAlign::TOP_LEFT, "%.0f ", id(pm1).state); break;
+              case 251 ... 1000: it.printf(5, 94, id(font0), tred, TextAlign::TOP_LEFT, "%.0f ", id(pm1).state); break;
+              default: it.printf(5, 94, id(font0), blue, TextAlign::TOP_LEFT, "%.0f ", id(pm1).state); break;
+            }
+
+          uint16_t vpm2 = (id(pm2).state);
+            switch (vpm2) {
+              case 0 ... 30: it.printf(64, 94, id(font0), green, TextAlign::TOP_CENTER, "%.0f ", id(pm2).state); break;
+              case 31 ... 60: it.printf(64, 94, id(font0), lgreen, TextAlign::TOP_CENTER, "%.0f ", id(pm2).state); break;
+              case 61 ... 90: it.printf(64, 94, id(font0), yellow, TextAlign::TOP_CENTER, "%.0f ", id(pm2).state); break;
+              case 91 ... 120: it.printf(64, 94, id(font0), lyellow, TextAlign::TOP_CENTER, "%.0f ", id(pm2).state); break;
+              case 121 ... 250: it.printf(64, 94, id(font0), red, TextAlign::TOP_CENTER, "%.0f ", id(pm2).state); break;
+              case 251 ... 1000: it.printf(64, 94, id(font0), tred, TextAlign::TOP_CENTER, "%.0f ", id(pm2).state); break;
+              default: it.printf(64, 94, id(font0), blue, TextAlign::TOP_CENTER, "%.0f ", id(pm2).state); break;
+            }
+
+          uint16_t vpm10 = (id(pm10).state);
+            switch (vpm10) {
+              case 0 ... 30: it.printf(123, 94, id(font0), green, TextAlign::TOP_RIGHT, "%.0f ", id(pm10).state); break;
+              case 31 ... 60: it.printf(123, 94, id(font0), lgreen, TextAlign::TOP_RIGHT, "%.0f ", id(pm10).state); break;
+              case 61 ... 90: it.printf(123, 94, id(font0), yellow, TextAlign::TOP_RIGHT, "%.0f ", id(pm10).state); break;
+              case 91 ... 120: it.printf(123, 94, id(font0), lyellow, TextAlign::TOP_RIGHT, "%.0f ", id(pm10).state); break;
+              case 121 ... 250: it.printf(123, 94, id(font0), red, TextAlign::TOP_RIGHT, "%.0f ", id(pm10).state); break;
+              case 251 ... 1000: it.printf(123, 94, id(font0), tred, TextAlign::TOP_RIGHT, "%.0f ", id(pm10).state); break;
+              default: it.printf(123, 94, id(font0), blue, TextAlign::TOP_RIGHT, "%.0f ", id(pm10).state); break;
+            }
+
+          it.line(5, 110, 123, 110);
+
+          it.printf(5, 112, id(font1), my_white, TextAlign::TOP_LEFT, "CO 2:    %.0f ppm", id(scd40co2).state);
+
+          it.printf(5, 128, id(font1), my_white, TextAlign::TOP_LEFT, "TVOC:   %.0f ppb", id(ccs811tvoc).state);
+
+          it.line(5, 146, 123, 146);
+
+color:
+  - id: my_red
+    red: 100%
+    green: 0%
+    blue: 0%
+  - id: my_yellow
+    red: 100%
+    green: 100%
+    blue: 0%
+  - id: my_green
+    red: 0%
+    green: 100%
+    blue: 0%
+  - id: my_blue
+    red: 0%
+    green: 0%
+    blue: 100%
+  - id: my_white
+    red: 100%
+    green: 100%
+    blue: 100%
+  - id: my_black
+    red: 0%
+    green: 0%
+    blue: 0%    
+  - id: red
+    red: 100%
+    green: 30%
+    blue: 30%
+  - id: tred
+    red: 100%
+    green: 0%
+    blue: 0%
+  - id: yellow
+    red: 100%
+    green: 100%
+    blue: 0%
+  - id: lyellow
+    red: 100%
+    green: 50%
+    blue: 0%
+  - id: green
+    red: 0%
+    green: 100%
+    blue: 0%
+  - id: lgreen
+    red: 70%
+    green: 100%
+    blue: 0% 
+  - id: blue
+    red: 0%
+    green: 100%
+    blue: 100%
+  - id: white
+    red: 100%
+    green: 100%
+    blue: 100%
+  - id: black
+    red: 0%
+    green: 0%
+    blue: 0%       
+
+# СЕНСОРЫ
+binary_sensor:
+  - platform: status
+    name: "vindriktning-1 Status"
+
+sensor:
+  # IKEA
+  - platform: template
+    name: "PM 1.0"
+    id: "pm1"
+    device_class: PM1
+    accuracy_decimals: 0
+    unit_of_measurement: µg/m³
+  - platform: template
+    name: "PM 2.5"
+    id: "pm2"
+    device_class: PM25
+    accuracy_decimals: 0
+    unit_of_measurement: µg/m³
+  - platform: template
+    name: "PM 10 "
+    id: "pm10"
+    device_class: PM10
+    accuracy_decimals: 0
+    unit_of_measurement: µg/m³
+
+  # сенсоры из Home Assistant
+  - platform: homeassistant
+    name: "Temperature Ulitsa"
+    entity_id: sensor.ulitsa_t_min
+    id: ulitsa_t_min
+
+# CCS811 CO2 and Volatile Organic Compound Sensor
+  - platform: ccs811
+    eco2:
+      name: "vindriktning-1 CCS811 eCO2 Value"
+      filters:
+        - lambda: |-
+            if (id(uptime_sensor).state > 600) return x; else return {};
+        # костыль 2 - отфильтруем одиночные скачки
+        - median:
+            window_size: 5
+            send_every: 5
+            send_first_at: 1
+    tvoc:
+      name: "vindriktning-1 CCS811 Total Volatile Organic Compound"
+      id: ccs811tvoc
+      filters:
+        - lambda: |-
+            if (id(uptime_sensor).state > 600) return x; else return {};
+        # костыль 2 - отфильтруем одиночные скачки
+        - median:
+            window_size: 5
+            send_every: 5
+            send_first_at: 1
+    address: 0x5A
+    update_interval: 180s
+    #baseline: 0xA483  # Static Calibrating Baseline CCS811
+
+  # SCD4X CO2, Temperature and Relative Humidity Sensor
+  - platform: scd4x
+    co2:
+      name: "vindriktning-1 SCD40 CO2 Value"
+      id: scd40co2
+    temperature:
+      name: "vindriktning-1 SCD40 Temperature Value"
+    humidity:
+      name: "vindriktning-1 SCD40 Humidity Value"
+    address: 0x62
+    update_interval: 241s
+
+
+# -------------------------------
+  # системные сенсоры
+  - platform: uptime
+    name: "vindriktning-1 Uptime Sensor"
+    id: uptime_sensor
+    update_interval: 60s
+    on_raw_value:
+      then:
+        - text_sensor.template.publish:
+            id: uptime_human
+            state: !lambda |-
+              int seconds = round(id(uptime_sensor).raw_state);
+              int days = seconds / (24 * 3600);
+              seconds = seconds % (24 * 3600);
+              int hours = seconds / 3600;
+              seconds = seconds % 3600;
+              int minutes = seconds /  60;
+              seconds = seconds % 60;
+              return (
+                (days ? String(days) + "d " : "") +
+                (hours ? String(hours) + "h " : "") +
+                (minutes ? String(minutes) + "m " : "") +
+                (String(seconds) + "s")
+              ).c_str();
+              
+  - platform: wifi_signal
+    name: "vindriktning-1 WiFi Signal"
+    update_interval: 60s      
+
+# ТЕКСТОВЫЕ СЕНСОРЫ    
+text_sensor:
+  
+  # Версия
+  - platform: version
+    name: "vindriktning-1 Version"
+    
+  - platform: wifi_info
+    ip_address:
+      name: "vindriktning-1 IP Address"
+      
+  # Human readable Uptime sensor
+  - platform: template
+    name: "vindriktning-1 Uptime Human Readable"
+    id: uptime_human
+    icon: mdi:clock-start
+
+  # debug sensors
+  - platform: debug
+    device:
+      name: "vindriktning-1 Device Info"
+    reset_reason:
+      name: "vindriktning-1 Reset Reason"
+
+  # Восход
+  - platform: sun
+    type: sunrise
+    id: sun_sunrise
+    format: "%H:%M"
+  # Закат
+  - platform: sun
+    type: sunset
+    id: sun_sunset
+    format: "%H:%M"
+
+  - platform: homeassistant
+    entity_id: weather.home
+    #attribute: state
+    id: weather_state_now
+
+# ПЕРЕКЛЮЧАТЕЛИ
+switch:
+
+  # программный переключатель, который позволит нам перезагрузить устройство из Home Assistant (или путем публикации вручную в MQTT или API)
+  - platform: restart
+    name: "vindriktning-1 restart"
+
+  # Подсветка дисплея
+  - platform: gpio
+    pin: GPIO8
+    name: Light
+    id: light
+    restore_mode: ALWAYS_ON
